@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ma courbe d'apprentissage — My Partner School</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bleu:#2B7CC1;
+  --bleu-dark:#1A5A9A;
+  --bleu-light:#EBF4FC;
+  --bleu-mid:#D0E8F7;
+  --noir:#1A1A1A;
+  --gris:#5A6577;
+  --gris-light:#F4F7FA;
+  --gris-border:#DDE4ED;
+  --blanc:#FFFFFF;
+  /* phases */
+  --c0:#64748B; --c0l:#F1F5F9;
+  --c1:#E05252; --c1l:#FEF2F2;
+  --c2:#C0392B; --c2l:#FEE8E8;
+  --c3:#E07B39; --c3l:#FEF3EA;
+  --c4:#2B7CC1; --c4l:#EBF4FC;
+  --c5:#22A06B; --c5l:#EDFAF3;
+  --radius:14px;
+  --radius-sm:9px;
+  --shadow:0 2px 12px rgba(43,124,193,.10);
+  --shadow-card:0 1px 4px rgba(0,0,0,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{font-family:'DM Sans',sans-serif;background:#F4F7FA;color:var(--noir);min-height:100vh;}
+
+/* ── HEADER ── */
+header{
+  background:var(--blanc);
+  border-bottom:2px solid var(--bleu-mid);
+  padding:.85rem 2rem;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 8px rgba(43,124,193,.08);
+}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-logo{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;letter-spacing:-.02em;color:var(--noir);
+  display:flex;align-items:center;gap:2px;
+}
+.brand-logo span{color:var(--bleu);}
+.brand-tag{font-size:.65rem;font-weight:600;color:var(--gris);text-transform:uppercase;letter-spacing:.08em;border-left:2px solid var(--bleu-mid);padding-left:10px;}
+.view-toggle{display:flex;gap:6px;}
+.vtab{
+  padding:7px 18px;border-radius:30px;
+  border:1.5px solid var(--gris-border);
+  background:transparent;cursor:pointer;
+  font-size:13px;color:var(--gris);
+  font-family:'DM Sans',sans-serif;font-weight:500;
+  transition:all .18s;display:flex;align-items:center;gap:6px;
+}
+.vtab.on{background:var(--bleu);color:#fff;border-color:var(--bleu);font-weight:600;}
+.vtab:hover:not(.on){border-color:var(--bleu);color:var(--bleu);}
+
+/* ── LAYOUT ── */
+.container{max-width:980px;margin:0 auto;padding:1.75rem 1.25rem 3rem;}
+
+/* ── CARD ── */
+.card{
+  background:var(--blanc);border:1px solid var(--gris-border);
+  border-radius:var(--radius);padding:1.5rem;
+  margin-bottom:1.25rem;box-shadow:var(--shadow-card);
+}
+.card-title{
+  font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.1em;color:var(--bleu);
+  margin-bottom:1.1rem;display:flex;align-items:center;gap:8px;
+}
+.card-title::after{content:'';flex:1;height:1.5px;background:var(--bleu-mid);}
+
+/* ── CROCODILE SECTION ── */
+.croco-section{
+  background:var(--blanc);border:1px solid var(--gris-border);
+  border-radius:var(--radius);margin-bottom:1.25rem;
+  box-shadow:var(--shadow);overflow:hidden;
+}
+.croco-header{
+  background:var(--bleu);padding:1rem 1.5rem;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+}
+.croco-header h2{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#fff;}
+.croco-header p{font-size:.75rem;color:rgba(255,255,255,.75);}
+.croco-legend-bar{
+  display:flex;align-items:center;gap:20px;
+  padding:.85rem 1.25rem .4rem;flex-wrap:wrap;
+}
+.cleg-item{display:flex;align-items:center;gap:8px;}
+.cleg-line{display:inline-block;width:36px;height:4px;border-radius:2px;flex-shrink:0;}
+.cleg-label{font-size:.8rem;font-weight:600;font-family:'Syne',sans-serif;}
+.cleg-sep{width:1px;height:20px;background:var(--gris-border);flex-shrink:0;}
+.croco-phases-top{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:6px;
+  padding:.5rem 1rem .25rem;
+}
+.croco-phases-bot{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:6px;
+  padding:.25rem 1rem .85rem;
+}
+.croco-phase-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  text-align:center;
+}
+.croco-emoji{font-size:1.85rem;line-height:1;display:block;}
+.croco-phase-name{font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;line-height:1.2;}
+.croco-phase-sub{font-size:.58rem;font-weight:400;opacity:.6;line-height:1.2;color:var(--gris);}
+@media(max-width:580px){
+  .croco-phases-top,.croco-phases-bot{grid-template-columns:repeat(3,1fr);}
+}
+
+/* ── NOTE LECTURE ── */
+.reading-note{
+  margin:0 1rem 1rem;
+  padding:.75rem 1rem;
+  background:var(--bleu-light);
+  border-left:3px solid var(--bleu);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  font-size:.76rem;color:var(--bleu-dark);line-height:1.6;
+}
+
+/* ── PRENOM ── */
+.prenom-zone{display:flex;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap;}
+.prenom-zone input{
+  flex:1;min-width:200px;padding:11px 16px;
+  border:1.5px solid var(--gris-border);border-radius:var(--radius-sm);
+  background:var(--gris-light);color:var(--noir);
+  font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .18s;
+}
+.prenom-zone input:focus{border-color:var(--bleu);background:var(--blanc);}
+.prenom-zone input::placeholder{color:#9AA5B4;}
+.btn-go{
+  padding:11px 24px;border-radius:var(--radius-sm);border:none;
+  background:var(--bleu);color:#fff;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:13px;
+  cursor:pointer;transition:background .18s;white-space:nowrap;
+}
+.btn-go:hover{background:var(--bleu-dark);}
+
+/* ── WELCOME ── */
+.welcome{
+  border:1.5px dashed var(--bleu-mid);border-radius:var(--radius);
+  padding:2rem;text-align:center;background:var(--bleu-light);
+}
+.welcome h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:var(--bleu-dark);margin-bottom:.5rem;}
+.welcome p{font-size:13px;color:var(--gris);line-height:1.6;max-width:420px;margin:0 auto;}
+
+/* ── MOIS ── */
+.month-strip{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem;}
+.mbtn{
+  padding:5px 13px;border-radius:30px;
+  border:1.5px solid var(--gris-border);background:var(--blanc);
+  cursor:pointer;font-size:12px;color:var(--gris);
+  font-family:'DM Sans',sans-serif;font-weight:500;transition:all .15s;
+}
+.mbtn.done{border-color:var(--bleu);color:var(--bleu);background:var(--bleu-light);}
+.mbtn.on{background:var(--bleu);color:#fff;border-color:var(--bleu);font-weight:700;}
+
+/* ── CHART ── */
+.chart-wrap{position:relative;width:100%;height:190px;margin-bottom:.5rem;}
+.leg-row{display:flex;gap:18px;font-size:11px;color:var(--gris);margin-bottom:1.25rem;flex-wrap:wrap;}
+.leg-row span{display:flex;align-items:center;gap:6px;}
+.leg-line{width:20px;height:2.5px;border-radius:2px;flex-shrink:0;}
+.leg-dash{width:20px;height:0;border-top:2px dashed var(--gris-border);flex-shrink:0;}
+
+/* ── PHASES GRID ── */
+.phases-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:540px){.phases-grid{grid-template-columns:1fr;}}
+
+.pcard{
+  border:1.5px solid var(--gris-border);border-radius:var(--radius);
+  padding:1rem;cursor:pointer;background:var(--blanc);
+  transition:all .18s;position:relative;overflow:hidden;
+}
+.pcard:hover{border-color:var(--bleu);box-shadow:0 2px 12px rgba(43,124,193,.1);}
+.pcard.sel{border-width:2px;box-shadow:0 3px 16px rgba(43,124,193,.15);}
+.pcard::before{
+  content:'';position:absolute;top:0;left:0;width:4px;bottom:0;
+  border-radius:var(--radius) 0 0 var(--radius);
+}
+
+/* phase top bar via classe */
+.ph0::before{background:var(--c0);}  .ph0.sel{border-color:var(--c0);}
+.ph1::before{background:var(--c1);}  .ph1.sel{border-color:var(--c1);}
+.ph2::before{background:var(--c2);}  .ph2.sel{border-color:var(--c2);}
+.ph3::before{background:var(--c3);}  .ph3.sel{border-color:var(--c3);}
+.ph4::before{background:var(--c4);}  .ph4.sel{border-color:var(--c4);}
+.ph5::before{background:var(--c5);}  .ph5.sel{border-color:var(--c5);}
+
+.pcard-inner{padding-left:.65rem;}
+.p-persona{font-size:1.8rem;margin-bottom:.3rem;display:block;line-height:1;}
+.p-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  padding:2px 9px;border-radius:30px;margin-bottom:.5rem;
+}
+.ph0 .p-badge{background:var(--c0l);color:var(--c0);}
+.ph1 .p-badge{background:var(--c1l);color:var(--c1);}
+.ph2 .p-badge{background:var(--c2l);color:var(--c2);}
+.ph3 .p-badge{background:var(--c3l);color:var(--c3);}
+.ph4 .p-badge{background:var(--c4l);color:var(--c4);}
+.ph5 .p-badge{background:var(--c5l);color:var(--c5);}
+
+.p-title{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--noir);margin-bottom:.2rem;}
+.p-model{font-size:.7rem;font-weight:600;margin-bottom:.45rem;}
+.ph0 .p-model{color:var(--c0);} .ph1 .p-model{color:var(--c1);} .ph2 .p-model{color:var(--c2);}
+.ph3 .p-model{color:var(--c3);} .ph4 .p-model{color:var(--c4);} .ph5 .p-model{color:var(--c5);}
+.p-sub{font-size:.73rem;color:var(--gris);margin-bottom:.5rem;line-height:1.4;}
+.p-quote{font-size:.71rem;font-style:italic;color:#9AA5B4;border-left:2px solid var(--gris-border);padding-left:7px;line-height:1.5;margin-bottom:.55rem;}
+.psych-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.55rem;}
+.ptags-label{font-size:.62rem;font-weight:600;color:#9AA5B4;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.4rem;}
+.psych-tags-wrap{margin-bottom:.55rem;}
+.ptag-btn{
+  font-size:.62rem;padding:4px 9px;border-radius:30px;font-weight:500;
+  background:var(--gris-light);color:var(--gris);
+  border:1.5px solid var(--gris-border);
+  cursor:pointer;font-family:'DM Sans',sans-serif;
+  transition:all .15s;display:inline-flex;align-items:center;gap:4px;
+}
+.ptag-btn:hover{border-color:currentColor;background:var(--blanc);}
+.ptag-sel{font-weight:700;}
+.p-conseil{
+  font-size:.72rem;line-height:1.55;padding:.6rem .75rem;
+  border-radius:var(--radius-sm);background:var(--gris-light);
+  border-left:3px solid;margin-top:.1rem;
+}
+.ph0 .p-conseil{border-color:var(--c0);color:#374151;}
+.ph1 .p-conseil{border-color:var(--c1);color:#374151;}
+.ph2 .p-conseil{border-color:var(--c2);color:#374151;}
+.ph3 .p-conseil{border-color:var(--c3);color:#374151;}
+.ph4 .p-conseil{border-color:var(--c4);color:#374151;}
+.ph5 .p-conseil{border-color:var(--c5);color:#374151;}
+
+/* ── BOUTON VALIDER ── */
+.btn-confirm{
+  width:100%;padding:13px;border-radius:var(--radius-sm);border:none;
+  background:var(--bleu);color:#fff;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:14px;
+  cursor:pointer;transition:background .18s;margin-top:1rem;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-confirm:hover{background:var(--bleu-dark);}
+.btn-confirm:disabled{background:var(--gris-border);color:#9AA5B4;cursor:not-allowed;}
+
+/* ── HISTORIQUE ── */
+.h-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gris-border);font-size:13px;}
+.h-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.h-m{font-weight:600;min-width:28px;font-size:11px;color:var(--gris);}
+.h-phase{font-weight:500;color:var(--noir);}
+.h-model{font-size:11px;color:var(--gris);margin-left:3px;}
+
+/* ── FORMATEUR ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem;}
+@media(max-width:480px){.stats-row{grid-template-columns:1fr;}}
+.stat-card{background:var(--bleu-light);border:1px solid var(--bleu-mid);border-radius:var(--radius-sm);padding:1rem 1.2rem;}
+.stat-lbl{font-size:11px;color:var(--bleu-dark);margin-bottom:5px;font-weight:500;}
+.stat-val{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--bleu-dark);}
+.appr-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--gris-border);flex-wrap:wrap;}
+.appr-name-f{font-family:'Syne',sans-serif;font-size:.85rem;font-weight:700;min-width:90px;padding-top:2px;}
+.f-badges{display:flex;gap:5px;flex-wrap:wrap;}
+.f-badge{font-size:.65rem;padding:3px 9px;border-radius:30px;font-weight:600;}
+.empty-f{text-align:center;padding:2.5rem 1rem;color:var(--gris);font-size:13px;border:1.5px dashed var(--gris-border);border-radius:var(--radius);}
+.link-banner{padding:.8rem 1rem;background:var(--bleu-light);border:1px solid var(--bleu-mid);border-radius:var(--radius-sm);font-size:.76rem;color:var(--bleu-dark);line-height:1.55;margin-bottom:1rem;display:flex;gap:9px;align-items:flex-start;}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeIn .3s ease forwards;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-logo">MY<span>PARTNER</span></div>
+    <div class="brand-tag">Courbe d'apprentissage · Suivi promotion</div>
+  </div>
+  <div class="view-toggle">
+    <button class="vtab on" onclick="switchView('apprenant',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Apprenant
+    </button>
+    <button class="vtab" onclick="switchView('formateur',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Formateur
+    </button>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- ═══════════════════════════
+     VUE APPRENANT
+═══════════════════════════ -->
+<div id="view-apprenant">
+
+  <!-- CROCODILE -->
+  <div class="croco-section">
+    <div class="croco-header">
+      <div>
+        <h2>La courbe du crocodile — comprendre ta progression</h2>
+        <p>Compétences professionnelles &amp; vécu psychologique · Les deux évoluent ensemble</p>
+      </div>
+    </div>
+
+    <div class="croco-body">
+
+    <!-- ── LÉGENDE HORS COURBE — bien lisible ── -->
+    <div class="croco-legend-bar">
+      <div class="cleg-item">
+        <span class="cleg-line" style="background:#2B7CC1;height:5px;border-radius:3px;"></span>
+        <span class="cleg-label" style="color:#2B7CC1;">▲ Mes compétences professionnelles</span>
+      </div>
+      <div class="cleg-sep"></div>
+      <div class="cleg-item">
+        <span style="display:inline-block;width:36px;height:0;border-top:4px dashed #C0392B;flex-shrink:0;margin-top:2px;"></span>
+        <span class="cleg-label" style="color:#C0392B;">▼ Mon vécu psychologique</span>
+      </div>
+    </div>
+
+    <!-- ── SVG COURBE CROCODILE — deux mâchoires très espacées ── -->
+    <svg viewBox="0 0 960 310" width="100%" style="min-width:580px;display:block;" role="img"
+         aria-label="Courbe en forme de crocodile gueule ouverte — les 6 phases d'apprentissage">
+      <defs>
+        <linearGradient id="gGueule" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#F1F5F9" stop-opacity="0"/>
+          <stop offset="30%"  stop-color="#EBF4FC" stop-opacity=".4"/>
+          <stop offset="55%"  stop-color="#FEF2F2" stop-opacity=".35"/>
+          <stop offset="100%" stop-color="#EDFAF3" stop-opacity="0"/>
+        </linearGradient>
+        <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+          <polygon points="0,0 8,4 0,8" fill="#CBD5E1"/>
+        </marker>
+        <filter id="soft-shadow">
+          <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#00000018"/>
+        </filter>
+      </defs>
+
+      <!-- ══ ZONES DE FOND PAR GRANDE PHASE ══ -->
+      <rect x="14"  y="10" width="148" height="265" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+      <rect x="164" y="10" width="272" height="265" rx="8" fill="#FFF6F6" stroke="#FECACA" stroke-width="1"/>
+      <rect x="438" y="10" width="158" height="265" rx="8" fill="#FFFBF5" stroke="#FED7AA" stroke-width="1"/>
+      <rect x="598" y="10" width="348" height="265" rx="8" fill="#F0FBF8" stroke="#BBF7D0" stroke-width="1"/>
+
+      <!-- ══ FILL GUEULE OUVERTE ══ -->
+      <path d="
+        M 28,68
+        C 70,66 115,64 160,66
+        C 200,68 238,78 272,94
+        C 308,112 340,132 378,150
+        C 408,164 435,172 462,174
+        C 490,172 518,164 548,150
+        C 585,132 618,112 654,94
+        C 690,77 726,68 764,65
+        L 942,60
+        C 905,63 870,70 834,80
+        C 796,93 762,110 726,130
+        C 692,148 658,166 622,178
+        C 590,188 560,192 530,192
+        C 498,192 466,186 434,174
+        C 400,160 368,140 332,118
+        C 298,97 260,80 218,72
+        C 182,67 138,66 95,67
+        C 68,68 46,68 28,68 Z
+      " fill="url(#gGueule)" opacity=".9"/>
+
+      <!-- ══ MÂCHOIRE HAUTE — bleu plein épais ══ -->
+      <path d="
+        M 28,68
+        C 70,66 115,64 160,66
+        C 200,68 238,76 272,86
+        C 308,97 340,108 378,116
+        C 408,122 435,124 462,123
+        C 490,121 518,114 548,104
+        C 585,92 618,78 654,65
+        C 690,53 726,44 764,38
+        L 942,32
+      " fill="none" stroke="#2B7CC1" stroke-width="6" stroke-linecap="round"/>
+
+      <!-- ══ MÂCHOIRE BASSE — rouge bordeaux tireté épais ══ -->
+      <path d="
+        M 28,68
+        C 60,72 100,82 142,98
+        C 185,115 220,140 258,168
+        C 290,192 322,210 360,224
+        C 390,234 420,238 452,239
+        C 484,238 514,231 544,220
+        C 580,207 614,188 648,166
+        C 682,143 714,118 748,98
+        C 780,80 818,68 858,62
+        L 942,58
+      " fill="none" stroke="#C0392B" stroke-width="5"
+        stroke-dasharray="14,8" stroke-linecap="round"/>
+
+      <!-- ══ POINTS CLÉS sur mâchoire haute ══ -->
+      <circle cx="88"  cy="65"  r="7" fill="#2B7CC1" stroke="white" stroke-width="2.5"/>
+      <circle cx="240" cy="79"  r="7" fill="#2B7CC1" stroke="white" stroke-width="2.5"/>
+      <circle cx="462" cy="123" r="9" fill="#C0392B" stroke="white" stroke-width="2.5"/>
+      <circle cx="578" cy="100" r="7" fill="#2B7CC1" stroke="white" stroke-width="2.5"/>
+      <circle cx="740" cy="44"  r="7" fill="#2B7CC1" stroke="white" stroke-width="2.5"/>
+      <circle cx="900" cy="34"  r="7" fill="#22A06B" stroke="white" stroke-width="2.5"/>
+
+      <!-- ══ POINT BAS mâchoire basse ══ -->
+      <circle cx="452" cy="239" r="22" fill="#C0392B" stroke="none" opacity=".12"/>
+      <circle cx="452" cy="239" r="12" fill="#C0392B" stroke="white" stroke-width="2.5"/>
+
+      <!-- Ligne pointillée entre les deux points -->
+      <line x1="462" y1="130" x2="452" y2="228"
+            stroke="#C0392B" stroke-width="2" stroke-dasharray="5,4" opacity=".5"/>
+
+      <!-- ══ BULLE "Point de bascule" ══ -->
+      <rect x="374" y="186" width="158" height="26" rx="13" fill="#C0392B"/>
+      <polygon points="453,212 446,222 460,222" fill="#C0392B"/>
+      <text x="453" y="203" text-anchor="middle" font-size="10.5" fill="white"
+            font-family="Syne,sans-serif" font-weight="700">⚡ Point de bascule</text>
+
+      <!-- ══ CROCO — entre les deux courbes, au-dessus de la bulle ══ -->
+      <text x="453" y="182" text-anchor="middle" font-size="44">🐊</text>
+
+      <!-- ══ EMOJIS DE PHASES sur la mâchoire haute — taille lisible ══ -->
+      <text x="88"  y="42"  text-anchor="middle" font-size="26">🎓</text>
+      <text x="240" y="58"  text-anchor="middle" font-size="26">😰</text>
+      <text x="578" y="84"  text-anchor="middle" font-size="26">💪</text>
+      <text x="740" y="30"  text-anchor="middle" font-size="26">🚀</text>
+      <text x="900" y="20"  text-anchor="middle" font-size="26">🏆</text>
+
+      <!-- ══ LABELS GRANDES PHASES en bas des zones ══ -->
+      <text x="88"  y="285" text-anchor="middle" font-size="9"   fill="#64748B" font-family="Syne,sans-serif" font-weight="700">NIVEAU INITIAL</text>
+      <text x="300" y="285" text-anchor="middle" font-size="9"   fill="#C0392B" font-family="Syne,sans-serif" font-weight="700">DÉCONSTRUCTION</text>
+      <text x="517" y="285" text-anchor="middle" font-size="9"   fill="#E07B39" font-family="Syne,sans-serif" font-weight="700">RECONSTRUCTION</text>
+      <text x="772" y="285" text-anchor="middle" font-size="9"   fill="#22A06B" font-family="Syne,sans-serif" font-weight="700">NOUVEAU NIVEAU</text>
+
+      <!-- ══ AXE TEMPS ══ -->
+      <line x1="14" y1="298" x2="944" y2="298" stroke="#E2E8F0" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <text x="478" y="308" text-anchor="middle" font-size="8" fill="#CBD5E1" font-family="DM Sans,sans-serif">Temps · pratique · expérience en CFA et en entreprise →</text>
+
+    </svg>
+
+    <!-- ── RANGÉE BASSE : emojis + labels phases sous la courbe ── -->
+    <div class="croco-phases-bot">
+      <div class="croco-phase-item" style="color:#64748B;">
+        <span class="croco-phase-name">Je découvre</span>
+        <span class="croco-phase-sub">Incompétence inconsciente</span>
+      </div>
+      <div class="croco-phase-item" style="color:#E05252;">
+        <span class="croco-phase-name">Je me confronte</span>
+        <span class="croco-phase-sub">Incompétence consciente</span>
+      </div>
+      <div class="croco-phase-item" style="color:#C0392B;">
+        <span class="croco-emoji" style="font-size:1.4rem;">🌀</span>
+        <span class="croco-phase-name">Point de bascule</span>
+        <span class="croco-phase-sub">Prise de conscience</span>
+      </div>
+      <div class="croco-phase-item" style="color:#E07B39;">
+        <span class="croco-phase-name">Je progresse</span>
+        <span class="croco-phase-sub">Compétence consciente</span>
+      </div>
+      <div class="croco-phase-item" style="color:#2B7CC1;">
+        <span class="croco-phase-name">J'automatise</span>
+        <span class="croco-phase-sub">Compétence semi-auto</span>
+      </div>
+      <div class="croco-phase-item" style="color:#22A06B;">
+        <span class="croco-phase-name">Je maîtrise</span>
+        <span class="croco-phase-sub">Compétence inconsciente</span>
+      </div>
+    </div>
+
+    </div>
+
+    <div class="reading-note">
+      <strong>Comment lire cette courbe ?</strong>
+      La <strong>mâchoire du haut</strong> montre l'évolution de tes compétences professionnelles.
+      La <strong>mâchoire du bas</strong> montre ce que tu vis psychologiquement.
+      La <strong style="color:#C0392B;">gueule s'ouvre</strong> pendant la déconstruction — plus tu prends conscience de la complexité du métier, plus l'écart se creuse.
+      Elle se <strong style="color:#22A06B;">referme</strong> quand tes deux niveaux se rejoignent au nouveau plateau de compétences.
+    </div>
+  </div>
+
+  <!-- Saisie identité -->
+  <div class="card">
+    <div class="card-title">Mon espace de suivi personnel</div>
+    <div class="prenom-zone">
+      <input type="text" id="prenom-input" placeholder="Ton prénom…" maxlength="30" onkeydown="if(event.key==='Enter')loadApprenant()"/>
+      <input type="text" id="nom-input" placeholder="Ton nom…" maxlength="30" onkeydown="if(event.key==='Enter')loadApprenant()"/>
+      <select id="titre-input" style="flex:1;min-width:140px;padding:11px 16px;border:1.5px solid var(--gris-border);border-radius:var(--radius-sm);background:var(--gris-light);color:var(--noir);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;">
+        <option value="">Titre / Promo…</option>
+        <option>NTC</option>
+        <option>CC</option>
+        <option>CV</option>
+        <option>MEM</option>
+      </select>
+      <button class="btn-go" onclick="loadApprenant()">Accéder →</button>
+    </div>
+    <div id="loading-msg" style="display:none;font-size:12.5px;color:var(--gris);margin-bottom:.75rem;">Chargement de ton suivi…</div>
+    <div id="error-msg" style="display:none;font-size:12.5px;color:#C0392B;margin-bottom:.75rem;"></div>
+    <div id="welcome-screen">
+      <div class="welcome">
+        <div style="font-size:2rem;margin-bottom:.75rem;">🎯</div>
+        <h3>Bienvenue dans ton suivi My Partner School</h3>
+        <p>Chaque mois en début de séance, positionne-toi sur la courbe du crocodile. Ton formateur et toi suivez ta progression tout au long de l'année. Renseigne ton prénom ET ton nom pour que ton formateur retrouve bien ton suivi (utile en cas d'homonymes).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu apprenant -->
+  <div id="apprenant-content" style="display:none;">
+
+    <div class="card">
+      <div class="card-title" id="appr-lbl">Mon parcours</div>
+      <div class="month-strip" id="month-strip"></div>
+      <div class="chart-wrap">
+        <canvas id="appChart" role="img" aria-label="Ma courbe d'apprentissage personnelle sur 12 mois">Courbe personnelle de progression.</canvas>
+      </div>
+      <div class="leg-row">
+        <span><span class="leg-dash"></span>Progression théorique</span>
+        <span><span class="leg-line" style="background:#2B7CC1;"></span>Mon parcours réel</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Où suis-je sur la courbe ce mois-ci ?</div>
+      <div class="link-banner">
+        <span style="font-size:1rem;flex-shrink:0;">🔗</span>
+        <span>Choisis la phase qui te ressemble, puis clique sur <strong>ce que tu ressens précisément</strong> pour recevoir un message personnalisé.</span>
+      </div>
+      <div class="phases-grid" id="phase-grid"></div>
+      <button class="btn-confirm" id="confirm-btn" disabled onclick="confirmSelection()">
+        ✓ &nbsp;Valider mon positionnement du mois
+      </button>
+    </div>
+
+    <div id="history-block" style="display:none;" class="card fade-in">
+      <div class="card-title">Mon historique de progression</div>
+      <div id="history-list"></div>
+    </div>
+
+  </div>
+</div><!-- /apprenant -->
+
+<!-- ═══════════════════════════
+     VUE FORMATEUR
+═══════════════════════════ -->
+<div id="view-formateur" style="display:none;">
+  <div class="card">
+    <div class="card-title">Tableau de bord — Promotion</div>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-lbl">Apprenants suivis</div>
+        <div class="stat-val" id="s-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">Phase moyenne actuelle</div>
+        <div class="stat-val" id="s-avg" style="font-size:.9rem;padding-top:.4rem;line-height:1.3;">—</div>
+      </div>
+      <div class="stat-card" style="background:#FEF2F2;border-color:#FECACA;">
+        <div class="stat-lbl" style="color:#C0392B;">En déconstruction (ph. 1-2)</div>
+        <div class="stat-val" id="s-risk" style="color:#C0392B;">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Courbes de la promotion</div>
+    <div class="chart-wrap" style="height:215px;">
+      <canvas id="formChart" role="img" aria-label="Courbes de tous les apprenants">Suivi collectif.</canvas>
+    </div>
+    <div id="form-legend" class="leg-row" style="flex-wrap:wrap;gap:8px 16px;"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Suivi individuel</div>
+    <div id="formateur-list"></div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- Formulaire caché + iframe cachée : l'envoi passe par une vraie soumission
+     de formulaire (pas un fetch), ce qui contourne les blocages CORS entre
+     GitHub Pages et Google Apps Script. -->
+<iframe name="hiddenSubmitFrame" id="hiddenSubmitFrame" style="display:none"></iframe>
+<form id="hiddenForm" method="POST" target="hiddenSubmitFrame" style="display:none">
+  <input type="hidden" name="prenom"/>
+  <input type="hidden" name="nom"/>
+  <input type="hidden" name="titre"/>
+  <input type="hidden" name="moisIndex"/>
+  <input type="hidden" name="moisLabel"/>
+  <input type="hidden" name="phaseId"/>
+  <input type="hidden" name="phaseLabel"/>
+  <input type="hidden" name="modelPsych"/>
+  <input type="hidden" name="tagLabel"/>
+  <input type="hidden" name="conseil"/>
+</form>
+
+<script>
+  // Colle ici l'URL de ton déploiement Google Apps Script (se terminant par /exec)
+  const API_URL = "https://script.google.com/macros/s/AKfycbz6VV9WwGmnF_O2iyNRbQlUam9f_mUs4fARxIwOZtPlaFs2VM5Y4gR_sfNknOIhRvbz/exec";
+  document.getElementById('hiddenForm').action = API_URL;
+
+  let submissionInProgress = false;
+  document.getElementById('hiddenSubmitFrame').addEventListener('load', () => {
+    if (!submissionInProgress) return;
+    submissionInProgress = false;
+  });
+
+  function apiGet(params){
+    const qs = Object.keys(params).filter(k=>params[k]).map(k=>encodeURIComponent(k)+"="+encodeURIComponent(params[k])).join("&");
+    return fetch(API_URL + (qs ? "?"+qs : "")).then(r=>r.json());
+  }
+
+  function submitPositionnement(payload){
+    const form = document.getElementById('hiddenForm');
+    Object.keys(payload).forEach(key => {
+      const input = form.elements.namedItem(key);
+      if (input) input.value = payload[key];
+    });
+    submissionInProgress = true;
+    form.submit();
+  }
+
+  function showError(msg){ const e=document.getElementById("error-msg"); e.textContent=msg; e.style.display="block"; }
+  function hideError(){ document.getElementById("error-msg").style.display="none"; }
+
+const PHASES=[
+  {id:0,label:"Je découvre",title:"Incompétence inconsciente",modelPsych:"Niveau initial",
+   emoji:"🎓",
+   sub:"Je ne sais pas encore ce que je ne sais pas",
+   quote:'"Je pensais que c\'était simple… en fait c\'est bien plus complexe !"',
+   conseilDefaut:"C'est tout à fait normal de ne pas encore voir toute la complexité du métier. Cette phase est celle de l'ouverture. Reste curieux·se, observe et pose des questions sans te juger.",
+   psychTags:[
+     {label:"Découverte",
+      icon:"🔍",
+      conseil:"Tu explores un territoire nouveau — c'est excitant et un peu vertigineux à la fois. Laisse-toi surprendre ! Observe comment les pros autour de toi font les choses, sans te mettre de pression."},
+     {label:"Questionnements",
+      icon:"❓",
+      conseil:"Tes questions sont une richesse, pas un signe de faiblesse. Note-les toutes ! Un apprenant qui questionne est un apprenant qui progresse. Partage-les avec ton formateur ou ton maître d'apprentissage."},
+     {label:"1ers doutes",
+      icon:"💭",
+      conseil:"Le doute est le signe que tu commences à prendre conscience de la réalité du métier. C'est bon signe ! Parle-en à quelqu'un de confiance — ne reste pas seul·e avec ça."}
+   ],
+   color:"#64748B",cls:"ph0",curveY:78,badgeBg:"#F1F5F9",badgeFg:"#64748B",badgeTxt:"Démarrage"},
+
+  {id:1,label:"Je me confronte",title:"Incompétence consciente",modelPsych:"Déconstruction",
+   emoji:"😰",
+   sub:"Je réalise ce que je ne maîtrise pas encore",
+   quote:'"C\'est dur. Je fais des erreurs mais je comprends pourquoi."',
+   conseilDefaut:"C'est la phase la plus difficile — et la plus riche ! La gueule du crocodile s'ouvre. Ton cerveau déconstruit ses anciens schémas. Chaque erreur est une information précieuse. Note tes questions.",
+   psychTags:[
+     {label:"Conflit socio-cognitif",
+      icon:"⚡",
+      conseil:"Tu te heurtes à des façons de faire différentes de ce que tu connaissais. C'est normal : ton cerveau compare et résiste. C'est exactement ce frottement qui crée l'apprentissage. Tiens bon !"},
+     {label:"Stress émotionnel",
+      icon:"😤",
+      conseil:"Le stress que tu ressens est une énergie — elle signale que tu t'impliques vraiment. Respire, découpe les tâches en petites étapes, et célèbre chaque mini-victoire. Tu n'as pas à tout maîtriser d'un coup."},
+     {label:"Remises en question",
+      icon:"🔄",
+      conseil:"Te remettre en question, c'est déjà avancer. Ça demande du courage. Si tu doutes de tes choix ou de ta place, parle-en à ton formateur — c'est fait pour ça. Aucune question n'est trop petite."},
+     {label:"Résistances possibles",
+      icon:"🚧",
+      conseil:"Résister, c'est humain. Mais attention : la résistance prolongée te maintient au même endroit. Identifie ce qui te bloque vraiment — est-ce la méthode ? le contenu ? le contexte ? On peut travailler ensemble là-dessus."}
+   ],
+   color:"#E05252",cls:"ph1",curveY:55,badgeBg:"#FEF2F2",badgeFg:"#E05252",badgeTxt:"Déconstruction"},
+
+  {id:2,label:"Je touche le fond",title:"Prise de conscience",modelPsych:"Point de bascule",
+   emoji:"🌀",
+   sub:"Je réalise l'ampleur du chemin — et je choisis d'y aller",
+   quote:'"C\'est le moment le plus dur… mais quelque chose change en moi."',
+   conseilDefaut:"Tu es au fond de la gueule du crocodile. C'est ici que tout se joue. Accepter la déstabilisation, c'est ouvrir la porte à la reconstruction. Tu n'es pas seul·e.",
+   psychTags:[
+     {label:"Conflit intra-psychique",
+      icon:"🌪️",
+      conseil:"Tu vis une tension intérieure forte entre qui tu étais et qui tu es en train de devenir. C'est inconfortable, et c'est exactement ce que doit produire un vrai apprentissage. Ce conflit intérieur est le moteur de ta transformation. Donne-lui du temps."},
+     {label:"Angoisse de l'échec",
+      icon:"😨",
+      conseil:"L'angoisse de l'échec te tétanise ? C'est le signal que tu t'engages vraiment. Rappelle-toi : échouer dans un exercice, c'est apprendre en sécurité. Ce n'est pas toi qui échoues, c'est une tentative. Essaie encore, différemment. Parle-en à ton formateur — c'est urgent."},
+     {label:"Stratégies de fuite possibles",
+      icon:"🏃",
+      conseil:"Tu sens l'envie d'éviter, de procrastiner, de décrocher ? C'est le signe que tu es au bord du basculement — et que tu as besoin d'aide maintenant. Ne reste pas seul·e avec ça. Contacte ton formateur ou ton maître d'apprentissage aujourd'hui. Un pas vers l'aide, c'est déjà tourner le dos à la fuite."},
+     {label:"Prise de conscience",
+      icon:"💡",
+      conseil:"Tu es au point de bascule — le moment le plus puissant de tout ton parcours. Tu vois maintenant clairement l'écart entre là où tu en es et là où tu veux aller. Cette lucidité est ta plus grande force. La remontée commence ici. Cap sur la reconstruction !"}
+   ],
+   color:"#C0392B",cls:"ph2",curveY:22,badgeBg:"#FEE8E8",badgeFg:"#C0392B",badgeTxt:"Point de bascule"},
+
+  {id:3,label:"Je progresse",title:"Compétence consciente",modelPsych:"Reconstruction",
+   emoji:"💪",
+   sub:"Je sais faire, mais je dois encore me concentrer",
+   quote:'"Ça marche quand je me concentre. Je commence à voir les liens !"',
+   conseilDefaut:"Tu es en pleine reconstruction ! La courbe remonte. Ton nouveau cadre de référence se construit brique par brique. Pratique, répète, expérimente — chaque essai consolide.",
+   psychTags:[
+     {label:"Nouvelles connaissances",
+      icon:"📚",
+      conseil:"Tu accumules de nouveaux savoirs — bien ! Maintenant l'enjeu, c'est de les relier entre eux. Essaie d'expliquer ce que tu as appris avec tes propres mots, comme si tu l'expliquais à un·e ami·e. Si tu peux l'expliquer, c'est que tu l'as vraiment compris."},
+     {label:"Mise en liens",
+      icon:"🔗",
+      conseil:"Tu commences à relier les points entre eux — entre ce que tu apprends en CFA et ce que tu vis en entreprise. C'est exactement ça, l'apprentissage par alternance ! Note ces liens dès qu'ils apparaissent. C'est ton portfolio de compétences qui se construit."},
+     {label:"Enrichissement du cadre",
+      icon:"🏗️",
+      conseil:"Ton ancien cadre de référence se transforme, s'enrichit. Tu ne jettes pas ce que tu savais — tu le complètes. C'est une bonne nouvelle ! Identifie ce que tu maîtrises déjà et construis à partir de là."},
+     {label:"Intégration progressive",
+      icon:"🧩",
+      conseil:"Les pièces du puzzle s'assemblent progressivement. Ne te décourage pas si certaines résistent encore. Revois les fondamentaux, entraîne-toi sur les situations concrètes, et demande un retour à ton formateur sur ce qui reste flou."}
+   ],
+   color:"#E07B39",cls:"ph3",curveY:55,badgeBg:"#FEF3EA",badgeFg:"#E07B39",badgeTxt:"Reconstruction"},
+
+  {id:4,label:"J'automatise",title:"Compétence semi-automatique",modelPsych:"Consolidation",
+   emoji:"🚀",
+   sub:"Ça vient presque naturellement",
+   quote:'"Je n\'ai plus besoin de chercher — ça commence à venir tout seul !"',
+   conseilDefaut:"La gueule du crocodile se referme ! Tes compétences et ton vécu psychologique se rejoignent. Entraîne-toi dans des situations variées pour ancrer ces nouveaux automatismes.",
+   psychTags:[
+     {label:"Intégration des nouvelles infos",
+      icon:"⚙️",
+      conseil:"Ton cerveau a intégré les nouvelles informations et commence à les traiter automatiquement. Pour consolider, expose-toi à des situations légèrement différentes de celles que tu connais. La variété des contextes ancre les compétences bien mieux que la répétition à l'identique."},
+     {label:"Acceptation du changement",
+      icon:"🌱",
+      conseil:"Tu as accepté que tu n'es plus le·la même qu'au départ — et c'est une vraie force. Cette acceptation libère de l'énergie pour aller encore plus loin. Prends un moment pour regarder le chemin parcouru : tu mérites de le reconnaître."},
+     {label:"Nouvelle vision de soi",
+      icon:"🪞",
+      conseil:"Tu te vois différemment — plus compétent·e, plus légitime. C'est ta nouvelle identité professionnelle qui émerge. Nourris-la ! Prends des initiatives, propose des idées, engage-toi davantage en entreprise. Tu as quelque chose à apporter."}
+   ],
+   color:"#2B7CC1",cls:"ph4",curveY:78,badgeBg:"#EBF4FC",badgeFg:"#2B7CC1",badgeTxt:"Consolidation"},
+
+  {id:5,label:"Je maîtrise",title:"Compétence inconsciente",modelPsych:"Nouveau niveau de compétences",
+   emoji:"🏆",
+   sub:"Je fais sans y penser — je peux transmettre",
+   quote:'"C\'est automatique. Je peux expliquer et aider les autres maintenant."',
+   conseilDefaut:"Tu as atteint ton nouveau plateau ! La courbe du crocodile est refermée. Tu incarnes une nouvelle identité professionnelle. Partager tes compétences est la meilleure façon de les ancrer durablement.",
+   psychTags:[
+     {label:"Nouvelle logique d'existence",
+      icon:"✨",
+      conseil:"Ta façon de voir le métier, les relations professionnelles, toi-même — tout a changé. Tu fonctionnes avec une nouvelle logique. Prends le temps d'en prendre conscience : c'est le signe d'une transformation profonde et durable."},
+     {label:"Nouvelle identité professionnelle",
+      icon:"🪪",
+      conseil:"Tu n'es plus l'apprenant·e du début — tu es un·e professionnel·le en devenir, avec une vraie légitimité. Assume cette identité ! Parle de ton métier avec fierté, engage-toi dans ton secteur, sois force de proposition."},
+     {label:"Transmission active",
+      icon:"🎓",
+      conseil:"Tu peux maintenant aider ceux qui sont plus bas sur la courbe. Transmettre, c'est la forme la plus haute de la maîtrise — et ça ancre tes compétences mieux que n'importe quel exercice. Propose ton aide à un·e camarade, devenez des ressources l'un pour l'autre."}
+   ],
+   color:"#22A06B",cls:"ph5",curveY:92,badgeBg:"#EDFAF3",badgeFg:"#22A06B",badgeTxt:"Maîtrise"}
+];
+
+const MONTHS=["M1","M2","M3","M4","M5","M6","M7","M8","M9","M10","M11","M12"];
+const CURVE_BASE=[78,70,55,35,22,38,55,68,78,85,90,92];
+const MULTI=["#2B7CC1","#22A06B","#E05252","#E07B39","#9B59F5","#F472B6","#0891B2","#65A30D"];
+
+let prenom="",nomVal="",titreVal="",selPhase=null,selTag={},curMonth=0,hist={};
+let appCh=null,frmCh=null;
+
+// Persistance : voir apiGet()/submitPositionnement() plus haut (Google Sheet via Apps Script).
+
+function switchView(v,btn){
+  document.getElementById("view-apprenant").style.display=v==="apprenant"?"block":"none";
+  document.getElementById("view-formateur").style.display=v==="formateur"?"block":"none";
+  document.querySelectorAll(".vtab").forEach(t=>t.classList.remove("on"));
+  btn.classList.add("on");
+  if(v==="formateur")renderForm();
+}
+
+async function loadApprenant(){
+  const p=document.getElementById("prenom-input").value.trim();
+  const n=document.getElementById("nom-input").value.trim();
+  const t=document.getElementById("titre-input").value;
+  hideError();
+  if(!p||!n){ showError("Merci de renseigner ton prénom ET ton nom."); return; }
+  if(API_URL.indexOf('COLLE_ICI')!==-1){ showError("L'outil n'est pas encore connecté à Google Sheets — préviens Stéphanie."); return; }
+  prenom=p;nomVal=n;titreVal=t;
+  document.getElementById("loading-msg").style.display="block";
+  try{
+    const res=await apiGet({prenom:p,nom:n});
+    document.getElementById("loading-msg").style.display="none";
+    if(!res.ok){ showError("Erreur de chargement : "+(res.error||"inconnue")); return; }
+    hist={};
+    (res.data||[]).forEach(row=>{
+      const mi=Number(row['Mois (index)']);
+      const pid=Number(row['Phase (id)']);
+      if(!isNaN(mi)&&!isNaN(pid)&&hist[mi]===undefined){ hist[mi]=pid; }
+    });
+    curMonth=0;
+    const ks=Object.keys(hist).map(Number);
+    if(ks.length)curMonth=Math.min(Math.max(...ks)+1,11);
+    selPhase=hist[curMonth]??null;selTag={};
+    document.getElementById("welcome-screen").style.display="none";
+    document.getElementById("apprenant-content").style.display="block";
+    document.getElementById("appr-lbl").textContent="Mon parcours — "+p.charAt(0).toUpperCase()+p.slice(1);
+    render();
+  }catch(err){
+    document.getElementById("loading-msg").style.display="none";
+    showError("Impossible de contacter le serveur. Vérifie ta connexion et réessaie.");
+  }
+}
+
+function maxM(){const k=Object.keys(hist).map(Number);if(!k.length)return 0;return Math.min(Math.max(...k)+1,11);}
+
+function renderStrip(){
+  const c=document.getElementById("month-strip");c.innerHTML="";
+  MONTHS.forEach((m,i)=>{
+    if(i>maxM())return;
+    const done=hist[i]!==undefined;
+    const b=document.createElement("button");
+    b.className="mbtn"+(i===curMonth?" on":"")+(done&&i!==curMonth?" done":"");
+    b.innerHTML=(done?"✓ ":"")+m;
+    b.onclick=(mi=>()=>{curMonth=mi;selPhase=hist[mi]??null;selTag={};render();})(i);
+    c.appendChild(b);
+  });
+}
+
+function renderGrid(){
+  const g=document.getElementById("phase-grid");g.innerHTML="";
+  PHASES.forEach(p=>{
+    const sel=selPhase===p.id;
+    const d=document.createElement("div");
+    d.className="pcard "+p.cls+(sel?" sel":"");
+
+    const tagsHtml=p.psychTags.map((t,ti)=>{
+      const isSelTag=sel&&selTag[p.id]===ti;
+      return `<button class="ptag-btn${isSelTag?" ptag-sel":""}"
+        data-pid="${p.id}" data-ti="${ti}"
+        style="${isSelTag?`background:${p.badgeBg};color:${p.color};border-color:${p.color};font-weight:700;`:""}"
+        onclick="onTagClick(event,${p.id},${ti})">${t.icon} ${t.label}</button>`;
+    }).join("");
+
+    let conseilHtml="";
+    if(sel){
+      const ti=selTag[p.id];
+      const msg=(ti!==undefined&&ti!==null)?p.psychTags[ti].conseil:p.conseilDefaut;
+      const icon=(ti!==undefined&&ti!==null)?p.psychTags[ti].icon:"📌";
+      conseilHtml=`<div class="p-conseil" id="conseil-${p.id}">${icon} ${msg}</div>`;
+    }
+
+    d.innerHTML=`<div class="pcard-inner">
+      <span class="p-persona">${p.emoji}</span>
+      <div class="p-badge">${p.badgeTxt}</div>
+      <div class="p-title">${p.title}</div>
+      <div class="p-model">${p.modelPsych}</div>
+      <div class="p-sub">${p.sub}</div>
+      <div class="p-quote">${p.quote}</div>
+      <div class="psych-tags-wrap">
+        <div class="ptags-label">Ce que je ressens en ce moment :</div>
+        <div class="psych-tags">${tagsHtml}</div>
+      </div>
+      ${conseilHtml}
+    </div>`;
+
+    d.onclick=(pid=>()=>{
+      selPhase=pid;
+      document.getElementById("confirm-btn").disabled=false;
+      renderGrid();
+    })(p.id);
+    g.appendChild(d);
+  });
+}
+
+function onTagClick(e,pid,ti){
+  e.stopPropagation();
+  selPhase=pid;
+  selTag[pid]=ti;
+  document.getElementById("confirm-btn").disabled=false;
+  renderGrid();
+}
+
+function renderHist(){
+  const b=document.getElementById("history-block");
+  const l=document.getElementById("history-list");
+  const keys=Object.keys(hist).map(Number).sort((a,c)=>a-c);
+  if(!keys.length){b.style.display="none";return;}
+  b.style.display="block";l.innerHTML="";
+  keys.forEach(k=>{
+    const p=PHASES[hist[k]];
+    const r=document.createElement("div");r.className="h-row";
+    r.innerHTML=`<div class="h-dot" style="background:${p.color};"></div>
+      <span class="h-m">${MONTHS[k]}</span>
+      <span style="font-size:1rem;flex-shrink:0;">${p.emoji}</span>
+      <span class="h-phase">${p.label}</span>
+      <span class="h-model">— ${p.modelPsych}</span>`;
+    l.appendChild(r);
+  });
+}
+
+function updateChart(){
+  const pts=MONTHS.map((_,i)=>hist[i]!==undefined?PHASES[hist[i]].curveY:null);
+  const bgC=MONTHS.map((_,i)=>hist[i]!==undefined?PHASES[hist[i]].color:"transparent");
+  const ds=[
+    {label:"Théorique",data:CURVE_BASE,borderColor:"#DDE4ED",borderWidth:2,borderDash:[6,4],pointRadius:0,tension:.45,fill:false},
+    {label:"Mon parcours",data:pts,borderColor:"#2B7CC1",borderWidth:3,pointRadius:7,pointBackgroundColor:bgC,pointBorderColor:"#fff",pointBorderWidth:2,tension:.4,fill:false,spanGaps:false}
+  ];
+  if(!appCh){
+    const ctx=document.getElementById("appChart").getContext("2d");
+    appCh=new Chart(ctx,{type:"line",data:{labels:MONTHS,datasets:ds},options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{if(c.datasetIndex===1&&hist[c.dataIndex]!==undefined)return " "+PHASES[hist[c.dataIndex]].emoji+" "+PHASES[hist[c.dataIndex]].label;return null;}}}},
+      scales:{
+        x:{grid:{color:"#F4F7FA"},ticks:{color:"#9AA5B4",font:{size:11},autoSkip:false,maxRotation:0}},
+        y:{min:0,max:100,display:false,reverse:false}
+      }
+    }});
+  }else{
+    appCh.data.datasets[1].data=pts;
+    appCh.data.datasets[1].pointBackgroundColor=bgC;
+    appCh.update();
+  }
+}
+
+function render(){renderStrip();renderGrid();renderHist();updateChart();document.getElementById("confirm-btn").disabled=selPhase===null;}
+
+function confirmSelection(){
+  if(selPhase===null)return;
+  const p=PHASES[selPhase];
+  const ti=selTag[selPhase];
+  const payload={
+    prenom, nom: nomVal, titre: titreVal,
+    moisIndex: curMonth, moisLabel: MONTHS[curMonth],
+    phaseId: selPhase, phaseLabel: p.label,
+    modelPsych: p.modelPsych,
+    tagLabel: (ti!==undefined&&ti!==null)?p.psychTags[ti].label:"",
+    conseil: (ti!==undefined&&ti!==null)?p.psychTags[ti].conseil:p.conseilDefaut
+  };
+  submitPositionnement(payload);
+  hist[curMonth]=selPhase;
+  const next=Math.min(curMonth+1,11);
+  if(hist[next]===undefined&&next!==curMonth)curMonth=next;
+  selPhase=hist[curMonth]??null;
+  render();
+}
+
+async function renderForm(){
+  const fl=document.getElementById("formateur-list");
+  if(API_URL.indexOf('COLLE_ICI')!==-1){
+    fl.innerHTML='<div class="empty-f">Outil non encore connecté à Google Sheets.</div>';
+    return;
+  }
+  fl.innerHTML='<div class="empty-f">Chargement…</div>';
+  let res;
+  try{ res=await apiGet({}); }catch(err){
+    fl.innerHTML='<div class="empty-f">Impossible de contacter le serveur.</div>';
+    return;
+  }
+  if(!res.ok){ fl.innerHTML='<div class="empty-f">Erreur : '+(res.error||'inconnue')+'</div>'; return; }
+
+  const byApp={};
+  (res.data||[]).forEach(row=>{
+    const pr=(row['Prénom']||'').toString().trim();
+    const nm=(row['Nom']||'').toString().trim();
+    if(!pr&&!nm)return;
+    const key=pr.toLowerCase()+'|'+nm.toLowerCase();
+    const mi=Number(row['Mois (index)']);
+    const pid=Number(row['Phase (id)']);
+    if(isNaN(mi)||isNaN(pid))return;
+    if(!byApp[key])byApp[key]={display:(pr+' '+nm).trim(),hist:{}};
+    if(byApp[key].hist[mi]===undefined)byApp[key].hist[mi]=pid; // lignes triées plus récent d'abord
+  });
+
+  const keys=Object.keys(byApp);
+  let last=[];
+  keys.forEach(k=>{const h=byApp[k].hist;const ks=Object.keys(h).map(Number);if(ks.length)last.push(h[Math.max(...ks)]);});
+  const avg=last.length?Math.round(last.reduce((a,b)=>a+b,0)/last.length):null;
+  const risk=last.filter(p=>p<=2).length;
+  document.getElementById("s-total").textContent=keys.length||"0";
+  document.getElementById("s-avg").textContent=avg!==null?PHASES[avg].emoji+" "+PHASES[avg].label:"—";
+  document.getElementById("s-risk").textContent=risk;
+
+  const ds=[{label:"Théorique",data:CURVE_BASE,borderColor:"#DDE4ED",borderWidth:2,borderDash:[6,4],pointRadius:0,tension:.45,fill:false,spanGaps:true}];
+  const leg=['<span><span class="leg-dash"></span>Théorique</span>'];
+  keys.forEach((k,i)=>{
+    const h=byApp[k].hist;
+    const pts=MONTHS.map((_,mi)=>h[mi]!==undefined?PHASES[h[mi]].curveY:null);
+    const col=MULTI[i%MULTI.length];
+    ds.push({label:byApp[k].display,data:pts,borderColor:col,borderWidth:2.5,pointRadius:5,pointBackgroundColor:col,pointBorderColor:"#fff",pointBorderWidth:1.5,tension:.4,fill:false,spanGaps:false});
+    leg.push(`<span><span class="leg-line" style="background:${col};"></span>${byApp[k].display}</span>`);
+  });
+  document.getElementById("form-legend").innerHTML=leg.join("");
+
+  if(!frmCh){
+    const ctx=document.getElementById("formChart").getContext("2d");
+    frmCh=new Chart(ctx,{type:"line",data:{labels:MONTHS,datasets:ds},options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:"#F4F7FA"},ticks:{color:"#9AA5B4",font:{size:11},autoSkip:false,maxRotation:0}},y:{min:0,max:100,display:false}}
+    }});
+  }else{frmCh.data.datasets=ds;frmCh.update();}
+
+  fl.innerHTML="";
+  if(!keys.length){fl.innerHTML='<div class="empty-f">Aucun apprenant n\'a encore enregistré de positionnement.<br/>Partagez ce fichier avec votre promotion !</div>';return;}
+  keys.forEach((k,i)=>{
+    const h=byApp[k].hist;
+    const ks=Object.keys(h).map(Number).sort((a,b)=>a-b);
+    const col=MULTI[i%MULTI.length];
+    const badges=ks.map(kk=>{const p=PHASES[h[kk]];return`<span class="f-badge" style="background:${p.badgeBg};color:${p.color};">${p.emoji} ${MONTHS[kk]} — ${p.label}</span>`;}).join("");
+    const row=document.createElement("div");row.className="appr-row";
+    row.innerHTML=`<div class="appr-name-f" style="color:${col};">${byApp[k].display}</div>
+      <div class="f-badges">${badges||'<span style="font-size:12px;color:#9AA5B4;">Pas encore de positionnement</span>'}</div>`;
+    fl.appendChild(row);
+  });
+}
+</script>
+</body>
+</html>
