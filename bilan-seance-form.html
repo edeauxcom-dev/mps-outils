@@ -330,9 +330,53 @@
 
 </div>
 
+<!-- Formulaire caché + iframe cachée : l'envoi passe par une vraie soumission
+     de formulaire (pas un fetch), ce qui contourne les blocages CORS entre
+     GitHub Pages et Google Apps Script. -->
+<iframe name="hiddenSubmitFrame" id="hiddenSubmitFrame" style="display:none"></iframe>
+<form id="hiddenForm" method="POST" target="hiddenSubmitFrame" style="display:none">
+  <input type="hidden" name="dateSeance"/>
+  <input type="hidden" name="titre"/>
+  <input type="hidden" name="formateur"/>
+  <input type="hidden" name="format"/>
+  <input type="hidden" name="seanceProjet"/>
+  <input type="hidden" name="contenuVu"/>
+  <input type="hidden" name="avancement"/>
+  <input type="hidden" name="absences"/>
+  <input type="hidden" name="pointsForts"/>
+  <input type="hidden" name="pointsBlocage"/>
+  <input type="hidden" name="ambiance"/>
+  <input type="hidden" name="alertes"/>
+  <input type="hidden" name="vigilance"/>
+</form>
+
 <script>
   // Colle ici l'URL de ton déploiement Google Apps Script (se terminant par /exec)
   const API_URL = "https://script.google.com/macros/s/AKfycbyrf4-RNWhJTd2B49y3FTVQdymSOxkbT9HIBneQmbOCgctxhwbrDiJPuB-1gZ9zYgHQ/exec";
+
+  document.getElementById('hiddenForm').action = API_URL;
+
+  let submissionInProgress = false;
+  let firstFrameLoad = true;
+
+  document.getElementById('hiddenSubmitFrame').addEventListener('load', () => {
+    // Le tout premier "load" correspond à l'iframe vide au chargement de la page — on l'ignore.
+    if (firstFrameLoad) { firstFrameLoad = false; return; }
+    if (!submissionInProgress) return;
+    submissionInProgress = false;
+
+    showMsg('✅ Bilan enregistré — merci !', true);
+    document.querySelectorAll('textarea, input[type="text"]').forEach(el => el.value = '');
+    document.getElementById('titre').selectedIndex = 0;
+    document.getElementById('format').selectedIndex = 0;
+    document.getElementById('avancement').selectedIndex = 0;
+    setAmbiance('');
+    document.getElementById('dateSeance').value = new Date().toISOString().slice(0,10);
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = false;
+    btn.textContent = 'Enregistrer le bilan';
+  });
 
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('dateSeance').value = new Date().toISOString().slice(0,10);
@@ -354,7 +398,7 @@
     el.className = ok ? 'ok' : 'err';
   }
 
-  async function envoyerBilan() {
+  function envoyerBilan() {
     const payload = {
       dateSeance:    document.getElementById('dateSeance').value,
       titre:         document.getElementById('titre').value,
@@ -380,34 +424,32 @@
       return;
     }
 
+    // Remplit le formulaire caché à partir des valeurs saisies, puis le soumet
+    // vers l'iframe cachée — c'est cette soumission (pas un fetch) qui échappe au CORS.
+    const form = document.getElementById('hiddenForm');
+    Object.keys(payload).forEach(key => {
+      const input = form.elements.namedItem(key);
+      if (input) input.value = payload[key];
+    });
+
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
     btn.textContent = 'Enregistrement…';
+    showMsg('Envoi en cours…', true);
 
-    try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (data.ok) {
-        showMsg('✅ Bilan enregistré — merci !', true);
-        document.querySelectorAll('textarea, input[type="text"]').forEach(el => el.value = '');
-        document.getElementById('titre').selectedIndex = 0;
-        document.getElementById('format').selectedIndex = 0;
-        document.getElementById('avancement').selectedIndex = 0;
-        setAmbiance('');
-        document.getElementById('dateSeance').value = new Date().toISOString().slice(0,10);
-      } else {
-        showMsg("Erreur à l'enregistrement : " + (data.error || 'inconnue'), false);
+    submissionInProgress = true;
+    form.submit();
+
+    // Filet de sécurité : si l'iframe ne déclenche jamais son "load"
+    // (réseau très lent, etc.), on redonne la main après 10 secondes.
+    setTimeout(() => {
+      if (submissionInProgress) {
+        submissionInProgress = false;
+        btn.disabled = false;
+        btn.textContent = 'Enregistrer le bilan';
+        showMsg("L'envoi prend plus de temps que prévu — vérifie le tableau des bilans pour confirmer, ou réessaie.", false);
       }
-    } catch (err) {
-      showMsg("Impossible de contacter le serveur. Vérifie ta connexion et réessaie.", false);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Enregistrer le bilan';
-    }
+    }, 10000);
   }
 </script>
 </body>
