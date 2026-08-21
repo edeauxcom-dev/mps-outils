@@ -246,7 +246,17 @@
         <div class="grid-2">
           <div class="field">
             <label>Formateur·trice</label>
-            <input type="text" id="formateur" placeholder="Nom du formateur présent"/>
+            <select id="formateur" onchange="toggleAutreFormateur()">
+              <option value="">— Sélectionner —</option>
+              <option>Grégory Greco</option>
+              <option>Jérémy Moran</option>
+              <option>Sébastien Renier</option>
+              <option>Fares Atba</option>
+              <option>Sandra Biela</option>
+              <option>Stéphanie Déaux</option>
+              <option value="Autre">Autre (préciser)</option>
+            </select>
+            <input type="text" id="formateurAutre" placeholder="Nom du formateur" style="display:none; margin-top:6px;"/>
           </div>
           <div class="field">
             <label>Séance / Projet concerné</label>
@@ -389,6 +399,11 @@
 
   document.getElementById('hiddenForm').action = API_URL;
 
+  function toggleAutreFormateur() {
+    const val = document.getElementById('formateur').value;
+    document.getElementById('formateurAutre').style.display = (val === 'Autre') ? 'block' : 'none';
+  }
+
   let submissionInProgress = false;
 
   document.getElementById('hiddenSubmitFrame').addEventListener('load', () => {
@@ -403,6 +418,8 @@
     document.getElementById('format').selectedIndex = 0;
     document.getElementById('avancement').selectedIndex = 0;
     document.getElementById('evalType').selectedIndex = 0;
+    document.getElementById('formateur').selectedIndex = 0;
+    toggleAutreFormateur();
     setAmbiance('');
     document.getElementById('dateSeance').value = new Date().toISOString().slice(0,10);
 
@@ -432,10 +449,15 @@
   }
 
   function envoyerBilan() {
+    const formateurSelect = document.getElementById('formateur').value;
+    const formateurFinal = (formateurSelect === 'Autre')
+      ? document.getElementById('formateurAutre').value
+      : formateurSelect;
+
     const payload = {
       dateSeance:    document.getElementById('dateSeance').value,
       titre:         document.getElementById('titre').value,
-      formateur:     document.getElementById('formateur').value,
+      formateur:     formateurFinal,
       format:        document.getElementById('format').value,
       seanceProjet:  document.getElementById('seanceProjet').value,
       contenuVu:     document.getElementById('contenuVu').value,
