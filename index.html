@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Partner School — Hub des outils</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bleu:#1a7bc4; --bleu-dark:#115a91; --bleu-light:#eaf4fb; --bleu-mid:#cfe4f5;
+  --noir:#1a1a1a; --gris:#5a6577; --gris-light:#f4f7fa; --gris-border:#dde4ed; --blanc:#fff;
+  --formateurs:#1a7bc4; --formateurs-l:#eaf4fb;
+  --admin:#c98a1f; --admin-l:#fdf3df;
+  --peda:#22a06b; --peda-l:#e9faf3;
+  --apprenants:#a24fd6; --apprenants-l:#f4ecfc;
+  --radius:16px; --radius-sm:10px;
+  --shadow:0 4px 20px rgba(26,123,196,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{font-family:'DM Sans',sans-serif;background:#f4f7fa;color:var(--noir);min-height:100vh;scroll-behavior:smooth;}
+
+/* HERO */
+.hero{
+  background:linear-gradient(135deg,var(--bleu-dark) 0%,var(--bleu) 55%,#2ea6e0 100%);
+  padding:2.5rem 1.5rem 2.6rem;position:relative;overflow:hidden;
+}
+.hero::before,.hero::after{content:'';position:absolute;border-radius:50%;background:rgba(255,255,255,.08);}
+.hero::before{width:420px;height:420px;top:-180px;right:-120px;}
+.hero::after{width:280px;height:280px;bottom:-200px;left:-80px;background:rgba(255,255,255,.06);}
+.hero-inner{max-width:1100px;margin:0 auto;position:relative;z-index:2;}
+.hero-top{display:flex;align-items:center;gap:16px;margin-bottom:1.8rem;flex-wrap:wrap;}
+.hero-logo{background:#fff;border-radius:12px;padding:9px 15px;box-shadow:0 4px 14px rgba(0,0,0,.15);}
+.hero-logo img{height:40px;display:block;}
+.hero-brandtext{color:#fff;}
+.hero-brandtext b{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;letter-spacing:.02em;display:block;}
+.hero-brandtext span{font-size:.72rem;opacity:.85;text-transform:uppercase;letter-spacing:.1em;}
+.hero h1{
+  font-family:'Syne',sans-serif;font-weight:800;color:#fff;
+  font-size:clamp(1.6rem,3.6vw,2.3rem);line-height:1.15;max-width:720px;margin-bottom:.6rem;
+}
+.hero p.lead{color:rgba(255,255,255,.88);font-size:.95rem;max-width:600px;line-height:1.6;}
+
+/* TEAM TABS */
+.team-tabs{
+  max-width:1100px;margin:1.6rem auto 0;padding:0 1.5rem;position:relative;z-index:3;
+  display:flex;gap:10px;flex-wrap:wrap;
+}
+.team-tab{
+  flex:1;min-width:150px;display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.28);
+  border-radius:14px;padding:12px 16px;cursor:pointer;transition:all .18s;
+}
+.team-tab:hover{background:rgba(255,255,255,.22);}
+.team-tab.on{background:#fff;border-color:#fff;box-shadow:0 8px 22px rgba(0,0,0,.18);}
+.team-tab-emoji{font-size:1.35rem;}
+.team-tab-txt b{display:block;font-family:'Syne',sans-serif;font-weight:700;font-size:.86rem;color:#fff;}
+.team-tab.on .team-tab-txt b{color:var(--noir);}
+.team-tab-txt span{font-size:.66rem;color:rgba(255,255,255,.8);}
+.team-tab.on .team-tab-txt span{color:var(--gris);}
+
+/* SEARCH */
+.controls{max-width:1100px;margin:-1.4rem auto 2.2rem;padding:0 1.5rem;position:relative;z-index:5;}
+.controls-card{
+  background:#fff;border-radius:var(--radius);box-shadow:0 10px 34px rgba(17,90,145,.16);
+  padding:.9rem 1.2rem;display:flex;gap:12px;flex-wrap:wrap;align-items:center;
+}
+.search-box{
+  flex:1;min-width:220px;display:flex;align-items:center;gap:8px;
+  background:var(--gris-light);border:1.5px solid var(--gris-border);border-radius:30px;padding:9px 16px;
+}
+.search-box input{border:none;background:transparent;outline:none;font-size:14px;font-family:'DM Sans',sans-serif;width:100%;color:var(--noir);}
+
+/* MAIN */
+.wrap{max-width:1100px;margin:0 auto;padding:0 1.5rem 4rem;}
+
+.team-panel{display:none;}
+.team-panel.on{display:block;border-radius:24px;padding:1.6rem 1.6rem 1.8rem;margin:0 -.2rem;}
+.team-formateurs.team-panel.on{background:var(--formateurs-l);}
+.team-admin.team-panel.on{background:var(--admin-l);}
+.team-peda.team-panel.on{background:var(--peda-l);}
+.team-apprenants.team-panel.on{background:var(--apprenants-l);}
+
+.team-intro{display:flex;align-items:center;gap:10px;margin-bottom:1.6rem;}
+.team-intro .dot{width:14px;height:14px;border-radius:4px;flex-shrink:0;}
+.team-intro h2{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;}
+.team-intro .total{font-size:.68rem;font-weight:700;padding:2px 10px;border-radius:20px;color:#fff;}
+
+.category{margin-bottom:2.2rem;}
+.category-head{display:flex;align-items:center;gap:8px;margin-bottom:.85rem;}
+.category-head .bar{width:4px;height:16px;border-radius:2px;}
+.category-head h3{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gris);}
+
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;}
+
+.card{
+  background:#fff;border-radius:var(--radius);padding:1.1rem 1.15rem 1rem;
+  box-shadow:var(--shadow);border:1.5px solid transparent;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;gap:.5rem;transition:transform .15s,box-shadow .15s;
+  text-decoration:none;color:inherit;cursor:pointer;
+}
+.card::before{content:'';position:absolute;top:0;left:0;width:5px;height:100%;}
+.card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(17,90,145,.18);}
+.card.disabled{cursor:default;opacity:.6;}
+.card.disabled:hover{transform:none;box-shadow:var(--shadow);}
+
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.card-icon{font-size:1.6rem;line-height:1;}
+.badge{font-size:.58rem;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em;}
+.badge.live{background:#e6f7ee;color:#22a06b;}
+.badge.wip{background:#eaf1fd;color:#3a6fd8;}
+.badge.soon{background:#f1f3f5;color:#8a95a3;}
+
+.card h4{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--noir);line-height:1.3;}
+.card p{font-size:.76rem;color:var(--gris);line-height:1.5;flex:1;}
+.card .goto{font-size:.7rem;font-weight:700;display:flex;align-items:center;gap:4px;}
+.card.disabled .goto{color:#9aa5b4;}
+
+.pole-formateurs .card::before, .team-formateurs .card::before{background:var(--formateurs);}
+.pole-admin .card::before, .team-admin .card::before{background:var(--admin);}
+.pole-peda .card::before, .team-peda .card::before{background:var(--peda);}
+.pole-apprenants .card::before, .team-apprenants .card::before{background:var(--apprenants);}
+.team-formateurs .goto{color:var(--formateurs);}
+.team-admin .goto{color:var(--admin);}
+.team-peda .goto{color:var(--peda);}
+.team-apprenants .goto{color:var(--apprenants);}
+.team-formateurs .dot,.team-formateurs .total,.team-formateurs .category-head .bar{background:var(--formateurs);}
+.team-admin .dot,.team-admin .total,.team-admin .category-head .bar{background:var(--admin);}
+.team-peda .dot,.team-peda .total,.team-peda .category-head .bar{background:var(--peda);}
+.team-apprenants .dot,.team-apprenants .total,.team-apprenants .category-head .bar{background:var(--apprenants);}
+
+.tofill{border:1.5px dashed #f0b93a;background:#fffaf0;color:#8a6d1f;font-size:.68rem;padding:2px 8px;border-radius:8px;display:inline-block;}
+
+.empty-search{text-align:center;padding:3rem 1rem;color:var(--gris);font-size:14px;display:none;}
+
+footer{text-align:center;padding:2rem 1rem 3rem;color:var(--gris);font-size:.78rem;line-height:1.7;}
+footer b{color:var(--bleu-dark);}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-top">
+      <div class="hero-logo"><img src="data:image/jpeg;base64,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" alt="My Partner School"/></div>
+      <div class="hero-brandtext">
+        <b>MY PARTNER SCHOOL</b>
+        <span>CFA · Marseille</span>
+      </div>
+    </div>
+    <h1>Le hub des outils My Partner</h1>
+    <p class="lead">Choisis ton équipe pour retrouver tes outils, classés par thématique.</p>
+  </div>
+  <div class="team-tabs" id="team-tabs"></div>
+</div>
+
+<div class="controls">
+  <div class="controls-card">
+    <div class="search-box">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9aa5b4" stroke-width="2.3"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" id="search" placeholder="Rechercher un outil dans cette équipe…" oninput="render()"/>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="content"></div>
+<div class="empty-search" id="empty-search">Aucun outil ne correspond à ta recherche dans cette équipe.</div>
+
+<footer>
+  CFA My Partner — NDA : 931320061513 — Siret : 91433349700016 — N° UAI : 134520T<br/>
+  <b>Hub interne</b> — pense à mettre ce lien en favori 🔖
+</footer>
+
+<script>
+// Chaque outil peut apparaître dans plusieurs équipes / catégories : la structure est
+// organisée directement par équipe > catégorie thématique > outils, pour rester lisible
+// même quand la liste grandit.
+const STATUS_LABEL = {live:'En ligne', wip:'En construction', soon:'À venir'};
+
+const TEAMS = [{"key": "formateurs", "label": "Formateurs", "emoji": "🧑‍🏫", "categories": [{"name": "Mes référentiels", "tools": [{"name": "Référentiels complets — CV", "icon": "📘", "poles": ["formateurs"], "status": "live", "url": "https://drive.google.com/file/d/1gMiRjFMxc08It9c3MIICQA73XQEHHV6Y/view?usp=sharing", "desc": "REAC + RE complet du titre Conseiller de Vente."}, {"name": "Référentiels complets — CC", "icon": "📘", "poles": ["formateurs"], "status": "live", "url": "https://drive.google.com/file/d/17wG5grXpUyrQbvV55_l_pATWWB_IXc7A/view?usp=sharing", "desc": "REAC + RE complet du titre Conseiller Commercial."}, {"name": "Référentiels complets — NTC", "icon": "📘", "poles": ["formateurs"], "status": "live", "url": "https://drive.google.com/file/d/1ZEw9Dq91nthAul3_Nc6ZfzyFVwEzzCTp/view?usp=sharing", "desc": "REAC + RE complet du titre Négociateur Technico-Commercial, fusionné en un seul PDF."}, {"name": "Référentiels complets — MEM", "icon": "📘", "poles": ["formateurs"], "status": "live", "url": "https://drive.google.com/file/d/1yJCj7ryaRh_yaIc17dic2q-IAgmzNml8/view?usp=sharing", "desc": "REAC + RE complet du titre Manager d'Établissement Marchand."}]}, {"name": "Mes outils admin", "tools": [{"name": "Bilan de séance — Saisie", "icon": "📝", "poles": ["formateurs", "peda"], "status": "live", "url": "https://edeauxcom-dev.github.io/mps-outils/bilan-seance-form.html", "desc": "Fiche de bilan par séance et par promo, partagée entre tous les formateurs. Trace pédagogique Qualiopi."}, {"name": "Bilan de séance — Consultation", "icon": "📊", "poles": ["formateurs", "peda"], "status": "live", "url": "https://edeauxcom-dev.github.io/mps-outils/bilan-seance-consultation.html", "desc": "Tableau croisé de tous les bilans de séance saisis, filtrable par titre/promo et par formateur."}, {"name": "Disponibilités formateurs", "icon": "🗓️", "poles": ["formateurs"], "status": "live", "url": "https://mps-planning-formateurs.netlify.app/dispos.html", "desc": "Outil de saisie des disponibilités de chaque formateur."}, {"name": "Planning formateurs", "icon": "📅", "poles": ["formateurs"], "status": "live", "url": "https://mps-planning-formateurs.netlify.app/admin.html", "desc": "Planning partagé de l'équipe pédagogique."}, {"name": "Tutoriel absences", "icon": "ℹ️", "poles": ["formateurs"], "status": "live", "url": "https://drive.google.com/file/d/1i2SQOmyW5lbh4Oyj8XbO6WTYv1hRXZAY/view?usp=sharing", "desc": "Guide pas à pas pour la déclaration des absences apprenants."}]}, {"name": "Le suivi en entreprise", "tools": [{"name": "Grilles de suivi compétences (CV / CC / NTC / MEM)", "icon": "📈", "poles": ["formateurs", "peda"], "status": "wip", "url": null, "desc": "Grille de montée en compétences par titre, remplie lors des visites tripartites. Les 4 grilles existent, l'hébergement + le backend partagé restent à faire."}]}, {"name": "Les outils utilisables en formation", "tools": [{"name": "Courbe d'apprentissage", "icon": "🐊", "poles": ["formateurs", "peda", "apprenants"], "status": "live", "url": "https://edeauxcom-dev.github.io/mps-outils/courbe_apprentissage_MPS_v5.html", "desc": "Auto-positionnement mensuel de l'apprenant sur la courbe du crocodile + vue formateur/promo. Utilisé dès fin J2 puis chaque mois."}, {"name": "Fiche « Ma présentation professionnelle » J1", "icon": "🙂", "poles": ["formateurs", "apprenants"], "status": "live", "url": "https://edeauxcom-dev.github.io/mps-outils/Fiche_Ma_presentation_professionnelle_J1.html", "desc": "Fiche d'onboarding J1, à remplir individuellement et exporter en PDF."}, {"name": "Jumeau numérique d'entraînement", "icon": "🤖", "poles": ["formateurs", "apprenants"], "status": "wip", "url": null, "desc": "Outil d'entraînement en projet. À terme dispo pour les formateurs et les apprenants NTC."}]}, {"name": "Prendre RDV avec Stéphanie", "tools": [{"name": "Agenda RDV partagé", "icon": "🔗", "poles": ["peda"], "status": "live", "url": "https://zcal.co/stephaniedeaux", "desc": "Prise de RDV en ligne avec Stéphanie (Zcal). ⚠️ Disponibilités pas encore à jour sur le calendrier."}]}]}, {"key": "admin", "label": "Admin", "emoji": "🗂️", "categories": [{"name": "Suivi des apprenants", "tools": [{"name": "Suivi nouveaux entrants", "icon": "🆕", "poles": ["admin"], "status": "live", "url": "https://docs.google.com/spreadsheets/d/13oNB6pEB_mzxsM7SWujFt--JtTu1N8QfKBWQfo3cLz4/edit?gid=1748134012#gid=1748134012", "desc": "Suivi administratif des nouveaux apprenants."}, {"name": "Suivi administratif", "icon": "🗃️", "poles": ["admin"], "status": "live", "url": "https://docs.google.com/spreadsheets/d/1PNVF9zCy6XJCpNhcyHrMbViAExsPVYj9WcNP3u2uuZM/edit", "desc": "Tableau de suivi administratif général."}]}, {"name": "Recrutement", "tools": [{"name": "Positionnement candidats", "icon": "✅", "poles": ["admin"], "status": "live", "url": "https://positionnement-mypartnerschool.netlify.app/", "desc": "Positionnement des candidats en amont de l'entrée en formation. Backend Apps Script + Google Sheet."}]}, {"name": "Entreprises", "tools": [{"name": "Calendrier employeur", "icon": "🏢", "poles": ["admin"], "status": "live", "url": "https://edeauxcom-dev.github.io/mps-outils/Calendrier_Employeur_MPS.html", "desc": "Calendrier personnalisé de formation à destination des entreprises, généré et exporté en PDF."}]}, {"name": "Prendre RDV avec Stéphanie", "tools": [{"name": "Agenda RDV partagé", "icon": "🔗", "poles": ["peda"], "status": "live", "url": "https://zcal.co/stephaniedeaux", "desc": "Prise de RDV en ligne avec Stéphanie (Zcal). ⚠️ Disponibilités pas encore à jour sur le calendrier."}]}]}, {"key": "peda", "label": "Pédagogie", "emoji": "🎓", "categories": [{"name": "Suivi individuel des apprenants", "tools": [{"name": "RDV de suivi mensuel", "icon": "📆", "poles": ["peda"], "status": "live", "url": "https://script.google.com/macros/s/AKfycbwPnu8XzY8szREPFaIKR12FDrZNGc0Opb_qSkW6l8VYYClvIlBHcHIZHrpmTHtKhjuKkA/exec", "desc": "Outil de suivi mensuel des apprenants, usage Stéphanie."}, {"name": "CR d'entretien individuel", "icon": "🗣️", "poles": ["peda"], "status": "live", "url": "https://edeauxcom-dev.github.io/mps-outils/Entretien%20Suivi%20mensuel%20apprenant%20V3%20020626.html", "desc": "Compte-rendu d'entretien individuel de suivi apprenant — Indicateur 14 Qualiopi. Export PDF, pas de sauvegarde serveur (voulu ainsi)."}]}, {"name": "Vue croisée formateurs", "tools": [{"name": "Bilan de séance — Consultation", "icon": "📊", "poles": ["formateurs", "peda"], "status": "live", "url": "https://edeauxcom-dev.github.io/mps-outils/bilan-seance-consultation.html", "desc": "Tableau croisé de tous les bilans de séance saisis, filtrable par titre/promo et par formateur."}, {"name": "Courbe d'apprentissage", "icon": "🐊", "poles": ["formateurs", "peda", "apprenants"], "status": "live", "url": "https://edeauxcom-dev.github.io/mps-outils/courbe_apprentissage_MPS_v5.html", "desc": "Auto-positionnement mensuel de l'apprenant sur la courbe du crocodile + vue formateur/promo. Utilisé dès fin J2 puis chaque mois."}, {"name": "Grilles de suivi compétences (CV / CC / NTC / MEM)", "icon": "📈", "poles": ["formateurs", "peda"], "status": "wip", "url": null, "desc": "Grille de montée en compétences par titre, remplie lors des visites tripartites. Les 4 grilles existent, l'hébergement + le backend partagé restent à faire."}]}, {"name": "Recrutement & observation formateurs", "tools": [{"name": "Grille d'entretien formateur", "icon": "🗒️", "poles": ["peda"], "status": "soon", "url": null, "desc": "Grille pour les entretiens de recrutement de formateurs — pas encore numérisée."}, {"name": "Grille d'observation en fond de classe", "icon": "👀", "poles": ["peda"], "status": "soon", "url": null, "desc": "Grille d'observation pédagogique en fond de classe — pas encore numérisée."}]}, {"name": "Organisation", "tools": [{"name": "Agenda RDV partagé", "icon": "🔗", "poles": ["peda"], "status": "live", "url": "https://zcal.co/stephaniedeaux", "desc": "Prise de RDV en ligne avec Stéphanie (Zcal). ⚠️ Disponibilités pas encore à jour sur le calendrier."}]}]}, {"key": "apprenants", "label": "Apprenants & Tuteurs", "emoji": "🎒", "categories": [{"name": "Mon parcours", "tools": [{"name": "Livret d'alternance", "icon": "📘", "poles": ["apprenants"], "status": "live", "url": "https://livret-alternance-mypartnerschool.netlify.app/", "desc": "Livret d'alternance à remplir par l'apprenant et son tuteur (hébergé sur Netlify)."}, {"name": "Fiche « Ma présentation professionnelle » J1", "icon": "🙂", "poles": ["formateurs", "apprenants"], "status": "live", "url": "https://edeauxcom-dev.github.io/mps-outils/Fiche_Ma_presentation_professionnelle_J1.html", "desc": "Fiche d'onboarding J1, à remplir individuellement et exporter en PDF."}]}, {"name": "Mon auto-positionnement", "tools": [{"name": "Courbe d'apprentissage", "icon": "🐊", "poles": ["formateurs", "peda", "apprenants"], "status": "live", "url": "https://edeauxcom-dev.github.io/mps-outils/courbe_apprentissage_MPS_v5.html", "desc": "Auto-positionnement mensuel de l'apprenant sur la courbe du crocodile + vue formateur/promo. Utilisé dès fin J2 puis chaque mois."}]}, {"name": "Entraînement", "tools": [{"name": "Jumeau numérique d'entraînement", "icon": "🤖", "poles": ["formateurs", "apprenants"], "status": "wip", "url": null, "desc": "Outil d'entraînement en projet. À terme dispo pour les formateurs et les apprenants NTC."}]}, {"name": "Prendre RDV avec Stéphanie", "tools": [{"name": "Agenda RDV partagé", "icon": "🔗", "poles": ["peda"], "status": "live", "url": "https://zcal.co/stephaniedeaux", "desc": "RDV en visio avec Stéphanie Déaux, Responsable Pédagogique (Zcal). ⚠️ Disponibilités pas encore à jour sur le calendrier."}]}]}];
+
+let currentTeam = TEAMS[0].key;
+
+function renderTabs(){
+  const tabsEl = document.getElementById('team-tabs');
+  tabsEl.innerHTML = TEAMS.map(t => `
+    <div class="team-tab ${t.key===currentTeam?'on':''}" onclick="setTeam('${t.key}')">
+      <span class="team-tab-emoji">${t.emoji}</span>
+      <span class="team-tab-txt"><b>${t.label}</b><span>${countTools(t)} outils</span></span>
+    </div>
+  `).join('');
+}
+
+function countTools(team){
+  return team.categories.reduce((sum,c)=>sum+c.tools.length,0);
+}
+
+function cardHtml(t){
+  const clickable = t.status === 'live' && t.url;
+  const tag = clickable ? 'a' : 'div';
+  const attrs = clickable ? `href="${t.url}" target="_blank" rel="noopener"` : '';
+  const missing = (t.status === 'live' && !t.url) ? `<span class="tofill">lien à compléter</span>` : '';
+  const gotoTxt = clickable ? "Ouvrir l'outil →" : (t.status==='wip' ? "Bientôt disponible" : t.status==='soon' ? "Pas encore digitalisé" : "En attente d'URL");
+  return `<${tag} class="card ${clickable ? '' : 'disabled'}" ${attrs}>
+    <div class="card-top">
+      <span class="card-icon">${t.icon}</span>
+      <span class="badge ${t.status}">${STATUS_LABEL[t.status]}</span>
+    </div>
+    <h4>${t.name}</h4>
+    <p>${t.desc}</p>
+    ${missing}
+    <span class="goto">${gotoTxt}</span>
+  </${tag}>`;
+}
+
+function matchesSearch(t, q){
+  if(!q) return true;
+  q = q.toLowerCase();
+  return t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q);
+}
+
+function render(){
+  renderTabs();
+  const q = document.getElementById('search').value.trim();
+  const team = TEAMS.find(t => t.key === currentTeam);
+  const container = document.getElementById('content');
+  container.innerHTML = '';
+
+  const panel = document.createElement('div');
+  panel.className = 'team-panel on team-' + team.key;
+
+  const visibleCategories = team.categories
+    .map(cat => ({ ...cat, tools: cat.tools.filter(t => matchesSearch(t, q)) }))
+    .filter(cat => cat.tools.length);
+
+  const totalShown = visibleCategories.reduce((s,c)=>s+c.tools.length,0);
+  document.getElementById('empty-search').style.display = totalShown === 0 ? 'block' : 'none';
+
+  const intro = document.createElement('div');
+  intro.className = 'team-intro';
+  intro.innerHTML = `<span class="dot"></span><h2>${team.emoji} ${team.label}</h2><span class="total">${countTools(team)}</span>`;
+  panel.appendChild(intro);
+
+  visibleCategories.forEach(cat => {
+    const catEl = document.createElement('div');
+    catEl.className = 'category';
+    catEl.innerHTML = `
+      <div class="category-head"><span class="bar"></span><h3>${cat.name}</h3></div>
+      <div class="cards-grid">${cat.tools.map(cardHtml).join('')}</div>
+    `;
+    panel.appendChild(catEl);
+  });
+
+  container.appendChild(panel);
+}
+
+function setTeam(key){
+  currentTeam = key;
+  document.getElementById('search').value = '';
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
