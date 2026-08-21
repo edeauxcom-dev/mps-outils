@@ -319,6 +319,36 @@
       </div>
     </div>
 
+    <div class="section">
+      <div class="section-header"><span class="icon">🎯</span> Évaluation formative réalisée pendant la séance</div>
+      <div class="section-body">
+        <div class="field" style="margin-bottom:10px">
+          <label>Type d'évaluation formative</label>
+          <select id="evalType">
+            <option value="">— Aucune / non concerné —</option>
+            <option>QCM / Quiz</option>
+            <option>Mise en situation</option>
+            <option>Jeu pédagogique</option>
+            <option>Question orale / débriefing collectif</option>
+            <option>Auto-évaluation apprenant</option>
+            <option>Production écrite courte</option>
+            <option>Exercice pratique guidé</option>
+            <option>Autre</option>
+          </select>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Objectif de l'évaluation</label>
+            <textarea id="evalObjectif" placeholder="Ce que cette évaluation cherchait à vérifier…"></textarea>
+          </div>
+          <div class="field">
+            <label>Résultat des apprenants</label>
+            <textarea id="evalResultat" placeholder="Taux de réussite estimé, points forts/faibles observés, apprenants en difficulté…"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <div id="msg"></div>
@@ -348,6 +378,9 @@
   <input type="hidden" name="ambiance"/>
   <input type="hidden" name="alertes"/>
   <input type="hidden" name="vigilance"/>
+  <input type="hidden" name="evalType"/>
+  <input type="hidden" name="evalObjectif"/>
+  <input type="hidden" name="evalResultat"/>
 </form>
 
 <script>
@@ -369,6 +402,7 @@
     document.getElementById('titre').selectedIndex = 0;
     document.getElementById('format').selectedIndex = 0;
     document.getElementById('avancement').selectedIndex = 0;
+    document.getElementById('evalType').selectedIndex = 0;
     setAmbiance('');
     document.getElementById('dateSeance').value = new Date().toISOString().slice(0,10);
 
@@ -411,7 +445,10 @@
       pointsBlocage: document.getElementById('pointsBlocage').value,
       ambiance:      document.getElementById('ambiance').value,
       alertes:       document.getElementById('alertes').value,
-      vigilance:     document.getElementById('vigilance').value
+      vigilance:     document.getElementById('vigilance').value,
+      evalType:      document.getElementById('evalType').value,
+      evalObjectif:  document.getElementById('evalObjectif').value,
+      evalResultat:  document.getElementById('evalResultat').value
     };
 
     if (!payload.titre || !payload.formateur || !payload.dateSeance) {
