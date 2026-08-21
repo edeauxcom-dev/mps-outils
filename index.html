@@ -58,6 +58,27 @@ html,body{font-family:'DM Sans',sans-serif;background:#f4f7fa;color:var(--noir);
 .team-tab-txt span{font-size:.66rem;color:rgba(255,255,255,.8);}
 .team-tab.on .team-tab-txt span{color:var(--gris);}
 
+/* Teinte de chaque onglet assortie au fond de sa team */
+.team-tab-formateurs{background:rgba(26,123,196,.22);}
+.team-tab-formateurs:hover{background:rgba(26,123,196,.32);}
+.team-tab-formateurs.on{background:var(--formateurs-l);border-color:var(--formateurs-l);}
+.team-tab-formateurs.on .team-tab-txt b{color:var(--formateurs);}
+
+.team-tab-admin{background:rgba(201,138,31,.24);}
+.team-tab-admin:hover{background:rgba(201,138,31,.34);}
+.team-tab-admin.on{background:var(--admin-l);border-color:var(--admin-l);}
+.team-tab-admin.on .team-tab-txt b{color:var(--admin);}
+
+.team-tab-peda{background:rgba(34,160,107,.24);}
+.team-tab-peda:hover{background:rgba(34,160,107,.34);}
+.team-tab-peda.on{background:var(--peda-l);border-color:var(--peda-l);}
+.team-tab-peda.on .team-tab-txt b{color:var(--peda);}
+
+.team-tab-apprenants{background:rgba(162,79,214,.24);}
+.team-tab-apprenants:hover{background:rgba(162,79,214,.34);}
+.team-tab-apprenants.on{background:var(--apprenants-l);border-color:var(--apprenants-l);}
+.team-tab-apprenants.on .team-tab-txt b{color:var(--apprenants);}
+
 /* SEARCH */
 .controls{max-width:1100px;margin:-1.4rem auto 2.2rem;padding:0 1.5rem;position:relative;z-index:5;}
 .controls-card{
@@ -183,7 +204,7 @@ let currentTeam = TEAMS[0].key;
 function renderTabs(){
   const tabsEl = document.getElementById('team-tabs');
   tabsEl.innerHTML = TEAMS.map(t => `
-    <div class="team-tab ${t.key===currentTeam?'on':''}" onclick="setTeam('${t.key}')">
+    <div class="team-tab team-tab-${t.key} ${t.key===currentTeam?'on':''}" onclick="setTeam('${t.key}')">
       <span class="team-tab-emoji">${t.emoji}</span>
       <span class="team-tab-txt"><b>${t.label}</b><span>${countTools(t)} outils</span></span>
     </div>
