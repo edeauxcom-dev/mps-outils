@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Calendrier de formation — Document employeur — My Partner School</title>
+<style>
+  :root{
+    --bleu-primaire:#1a7bc4; --bleu-fonce:#115a91; --bleu-pale:#eaf4fb;
+    --or:#c98a1f; --or-fond:#fdf3df; --vert:#2f9e6e; --gris:#6b7b86; --encre:#1c2b36;
+  }
+  *{box-sizing:border-box;}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f8fb;margin:0;color:var(--encre);}
+  .wrap{max-width:820px;margin:0 auto;padding:24px 16px 60px;}
+  .sheet{background:#fff;border-radius:14px;box-shadow:0 4px 20px rgba(17,90,145,.12);padding:0;overflow:hidden;}
+
+  .letterhead{display:flex;justify-content:space-between;align-items:flex-start;padding:28px 34px 20px;border-bottom:3px solid var(--bleu-primaire);}
+  .letterhead img{height:52px;}
+  .letterhead .coords{text-align:right;font-size:10.5px;color:var(--gris);line-height:1.6;}
+  .letterhead .coords b{color:var(--bleu-fonce);}
+
+  .doc-title{padding:22px 34px 4px;}
+  .doc-title .kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--or);font-weight:800;}
+  .doc-title h1{font-size:22px;color:var(--bleu-fonce);margin:6px 0 4px;}
+  .doc-title h1 .name-inline{
+    font:inherit;font-weight:800;color:var(--bleu-fonce);border:none;border-bottom:2px dashed #cfe0ee;
+    background:transparent;outline:none;min-width:220px;padding:0 2px;
+  }
+  .doc-title h1 .name-inline::placeholder{color:#b7cbdb;}
+  @media print{ .doc-title h1 .name-inline{border-bottom:none;} }
+  .doc-title p{font-size:12.5px;color:var(--gris);margin:0;}
+
+  .content{padding:10px 34px 34px;}
+  .intro-block{background:var(--bleu-pale);border-radius:12px;padding:16px 18px;margin:16px 0 22px;font-size:12.5px;line-height:1.6;color:var(--encre);}
+
+  .section-title{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:800;color:var(--bleu-fonce);margin:26px 0 10px;}
+  .section-title .ic{font-size:18px;}
+  p.txt{font-size:12.5px;line-height:1.65;margin:0 0 10px;color:var(--encre);}
+
+  .rhythm-day{display:flex;align-items:center;gap:10px;background:#f8fbfd;border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:12.5px;}
+  .rhythm-day .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+
+  .warn-block{background:var(--or-fond);border:1.5px dashed var(--or);border-radius:12px;padding:14px 16px;margin:10px 0;font-size:12.5px;line-height:1.6;color:#8a5f13;}
+  .closure-card{background:#fdecea;border-left:4px solid #d1554a;border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:12px;}
+  .critical-block{background:#fdecea;border:1.5px solid #d1554a;border-radius:12px;padding:16px 18px;margin:14px 0;font-size:12.5px;line-height:1.65;color:#7a2a22;}
+  .critical-block b{color:#a5372c;}
+
+  .gen-panel{background:var(--bleu-pale);border-radius:14px;padding:20px;margin-top:8px;}
+  .gen-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .gen-field{flex:1;min-width:150px;}
+  .gen-field label{display:block;font-size:10px;font-weight:700;color:var(--bleu-fonce);text-transform:uppercase;margin-bottom:4px;}
+  .gen-field input, .gen-field select{width:100%;padding:10px;border-radius:8px;border:1px solid #cfe0ee;font-size:13px;font-family:inherit;}
+  .gen-btn{background:var(--bleu-primaire);color:#fff;border:none;border-radius:8px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;}
+  #cal-output{margin-top:16px;column-width:250px;column-gap:24px;}
+  .cal-month{margin-top:14px;break-inside:avoid;}
+  .cal-month h4{font-size:12.5px;color:var(--bleu-fonce);margin:0 0 6px;text-transform:capitalize;}
+  .cal-session{display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;}
+  .badge-mini{font-size:9px;font-weight:800;color:#fff;border-radius:5px;padding:1px 7px;}
+  .badge-mini.dist{background:var(--bleu-primaire);}
+  .badge-mini.pres{background:var(--or);}
+  .badge-mini.onboarding{background:#7a4fc7;}
+  .badge-mini.ferme{background:var(--gris);}
+
+  .doc-footer{background:var(--bleu-fonce);color:#fff;padding:16px 34px;font-size:10.5px;text-align:center;line-height:1.6;}
+
+  .toolbar{text-align:center;margin:20px 0;}
+  .tool-btn{background:var(--bleu-primaire);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:12.5px;font-weight:600;cursor:pointer;}
+
+  @media print{
+    body{background:#fff;}
+    .wrap{max-width:100%;padding:0;}
+    .sheet{box-shadow:none;border-radius:0;}
+    .toolbar{display:none;}
+    .gen-btn{display:none;}
+    @page{size:A4;margin:12mm 10mm;}
+    .cal-month{break-inside:avoid;}
+    .cal-section-break{break-before:page;}
+    #cal-output{column-count:3;column-gap:14px;margin-top:10px;}
+    .cal-month h4{font-size:10.5px;margin:0 0 4px;}
+    .cal-session{font-size:9.5px;padding:2px 0;gap:5px;}
+    .badge-mini{font-size:7.5px;padding:1px 5px;}
+    .gen-panel{padding:12px;}
+    .gen-row{margin-bottom:6px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sheet">
+
+    <div class="letterhead">
+      <img src="data:image/jpeg;base64,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" alt="My Partner School">
+      <div class="coords">
+        <b>CFA My Partner School</b><br>
+        27 boulevard Charles Moretti, 13014 Marseille<br>
+        Tél : 07 61 69 42 03 — contact@mypartner-school.fr<br>
+        NDA 931320061513 — SIRET 914 333 497 00016 — UAI 134520T
+      </div>
+    </div>
+
+    <div class="doc-title">
+      <div class="kicker">Document à destination de l'entreprise</div>
+      <h1>Calendrier de <span id="doc-h1-role">votre alternant·e</span> : <input type="text" id="cal-nom" class="name-inline" placeholder="Prénom Nom" oninput="majNom()"></h1>
+      <p>Ce document vous permet d'anticiper précisément les journées de formation au CFA, afin d'organiser au mieux le planning de votre alternant·e en entreprise.</p>
+    </div>
+
+    <div class="content">
+
+      <div class="intro-block">
+        Madame, Monsieur,<br><br>
+        Vous trouverez ci-dessous le rythme de formation applicable à <span id="doc-intro-name">votre alternant·e</span>, ainsi que son calendrier précis de journées de formation sur toute la durée du contrat. Nous vous remercions de vous y référer pour l'organisation de son activité en entreprise.
+      </div>
+
+      <div class="section-title"><span class="ic">🚀</span>Le premier mois : la période d'onboarding</div>
+      <p class="txt">Quel que soit le titre préparé par votre alternant·e, son tout premier mois de formation est différent du rythme habituel : il s'agit d'un <b>mois d'onboarding</b>, en présentiel dans nos locaux, aux côtés de l'ensemble des nouveaux entrants de la promotion (tous titres confondus).</p>
+      <p class="txt">Le premier jour de formation de votre alternant·e correspond à son premier jour d'onboarding. Ensuite, chaque semaine, ce même jour est également consacré à l'onboarding en présentiel, jusqu'à la fin du mois calendaire (généralement 4 à 5 séances selon le mois). <b>Dès le mois suivant</b>, votre alternant·e rejoint le rythme habituel de son titre, détaillé ci-dessous.</p>
+
+      <div class="section-title"><span class="ic">🔄</span>Le rythme hebdomadaire (à partir du 2e mois)</div>
+      <div class="rhythm-day"><span class="dot" style="background:#1a7bc4;"></span><b>NTC</b> → 1 jour de formation/semaine, le lundi</div>
+      <div class="rhythm-day"><span class="dot" style="background:#2f9e6e;"></span><b>CC / CV</b> → 1 jour de formation/semaine, le mardi</div>
+      <div class="rhythm-day"><span class="dot" style="background:#c98a1f;"></span><b>MEM</b> → 1 jour de formation/semaine, le mercredi</div>
+      <p class="txt" style="margin-top:10px;">Chaque mois, le <b>dernier</b> jour de formation du mois (dernier lundi pour NTC, dernier mardi pour CC/CV, dernier mercredi pour MEM) se déroule en présentiel dans nos locaux. Toutes les autres séances du mois se déroulent en distanciel — votre alternant·e travaille alors sur sa formation depuis un lieu de son choix, en autonomie encadrée. Comme pour une journée en présentiel, il ne s'agit pas d'un temps de travail en entreprise : votre alternant·e n'est donc <b>pas disponible</b> pour vous ce jour-là, qu'il soit en distanciel ou en présentiel.</p>
+
+      <div class="section-title"><span class="ic">🚪</span>Fermetures du centre</div>
+      <div class="closure-card">🎄 <b>Fêtes de fin d'année</b> — en règle générale une dizaine de jours de fermeture autour de Noël et du Jour de l'An. Les dates exactes changent chaque année ; reportez-vous au calendrier généré ci-dessous pour les dates précises applicables à votre alternant·e.</div>
+      <div class="closure-card">☀️ <b>Août</b> — le centre est fermé tout le mois. Votre alternant·e est donc à votre disposition en entreprise à temps plein sur cette période, sauf congés posés.</div>
+
+      <div class="section-title"><span class="ic">🔀</span>Report des jours fériés</div>
+      <p class="txt">Lorsqu'un jour férié tombe sur le jour de formation habituel de votre alternant·e (lundi pour NTC, mardi pour CC/CV, mercredi pour MEM), la séance n'est <b>jamais perdue</b> : elle est automatiquement reportée au <b>vendredi de la même semaine</b>. Le calendrier généré ci-dessous intègre déjà ce report.</p>
+
+      <div class="section-title"><span class="ic">⚠️</span>Congés de l'apprenti·e et jours de formation</div>
+      <div class="critical-block">
+        <b>Point important :</b> les jours de congés de votre alternant·e ne peuvent pas être positionnés sur un jour de formation au CFA.<br><br>
+        Concrètement, si votre entreprise ferme collectivement à une période qui ne coïncide pas avec une fermeture du CFA (pont, fermeture estivale partielle, etc.), et qu'un jour de formation tombe durant cette fermeture, votre alternant·e doit néanmoins <b>se présenter en formation ce jour-là</b>, même si le reste de l'entreprise est fermé. Ses congés doivent être positionnés sur des jours où il n'a pas cours, en concertation avec vous.
+      </div>
+
+      <div class="section-title"><span class="ic">🎓</span>Jury de certification</div>
+      <p class="txt">L'examen final du titre professionnel préparé par votre alternant·e est planifié dans les <b>3 mois suivant la dernière séance</b> de son calendrier de formation. La date exacte dépend du calendrier des sessions de jury et vous sera communiquée par le CFA en temps voulu.</p>
+
+      <div class="section-title cal-section-break"><span class="ic">📅</span>Calendrier de formation</div>
+      <p class="txt">Ce calendrier a été généré à partir du titre préparé, de la date d'entrée et de la date de fin de contrat de votre alternant·e.</p>
+
+      <div class="gen-panel">
+        <div class="gen-row">
+          <div class="gen-field"><label>Titre préparé</label>
+            <select id="cal-titre">
+              <option value="1">NTC (lundi)</option>
+              <option value="2">CC / CV (mardi)</option>
+              <option value="3">MEM (mercredi)</option>
+            </select>
+          </div>
+          <div class="gen-field"><label>Date d'entrée</label><input type="date" id="cal-debut"></div>
+          <div class="gen-field"><label>Date de fin</label><input type="date" id="cal-fin"></div>
+        </div>
+        <button class="gen-btn" onclick="genererCalendrier()">Générer le calendrier</button>
+        <div id="cal-output"></div>
+      </div>
+
+    </div>
+
+    <div class="doc-footer">
+      CFA My Partner School — NDA : 931320061513 — SIRET : 914 333 497 00016 — N° UAI : 134520T<br>
+      Document généré automatiquement — pour toute question, contactez le CFA au 07 61 69 42 03
+    </div>
+
+  </div>
+
+  <div class="toolbar">
+    <button class="tool-btn" onclick="window.print()">🖨️ Imprimer / Exporter en PDF</button>
+  </div>
+</div>
+
+<script>
+function toISO(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function calculerPaques(year){
+  const a = year % 19, b = Math.floor(year/100), c = year % 100;
+  const d = Math.floor(b/4), e = b % 4, f = Math.floor((b+8)/25), g = Math.floor((b-f+1)/3);
+  const h = (19*a + b - d - g + 15) % 30;
+  const i = Math.floor(c/4), k = c % 4;
+  const l = (32 + 2*e + 2*i - h - k) % 7;
+  const m = Math.floor((a + 11*h + 22*l) / 451);
+  const month = Math.floor((h + l - 7*m + 114) / 31);
+  const day = ((h + l - 7*m + 114) % 31) + 1;
+  return new Date(year, month-1, day);
+}
+function joursFeriesAnnee(year){
+  const paq = calculerPaques(year);
+  const add = (n)=>{ const d=new Date(paq); d.setDate(d.getDate()+n); return toISO(d); };
+  return [
+    `${year}-01-01`, add(1), `${year}-05-01`, `${year}-05-08`, add(39), add(50),
+    `${year}-07-14`, `${year}-08-15`, `${year}-11-01`, `${year}-11-11`, `${year}-12-25`,
+  ];
+}
+function fermeturesAnnee(year){
+  return [
+    {start: `${year}-12-20`, end: `${year+1}-01-02`},
+    {start: `${year}-08-01`, end: `${year}-08-31`},
+  ];
+}
+function estFerme(dateISO){
+  const year = parseInt(dateISO.slice(0,4));
+  const closures = [...fermeturesAnnee(year), ...fermeturesAnnee(year-1)];
+  return closures.some(c => dateISO >= c.start && dateISO <= c.end);
+}
+function estFerie(dateISO){
+  const year = parseInt(dateISO.slice(0,4));
+  return joursFeriesAnnee(year).includes(dateISO) || joursFeriesAnnee(year-1).includes(dateISO) || joursFeriesAnnee(year+1).includes(dateISO);
+}
+const MOIS_FR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+function majNom(){
+  const nom = document.getElementById('cal-nom').value.trim();
+  const introName = document.getElementById('doc-intro-name');
+  introName.textContent = nom || 'votre alternant·e';
+}
+
+function genererCalendrier(){
+  majNom();
+
+  const titreVal = document.getElementById('cal-titre').value;
+  const weekdayTitre = {1:1, 2:2, 3:3}[titreVal];
+  const debutStr = document.getElementById('cal-debut').value;
+  const finStr = document.getElementById('cal-fin').value;
+  const output = document.getElementById('cal-output');
+  if(!debutStr || !finStr){ output.innerHTML = '<p style="color:#d1554a;font-size:12px;margin-top:10px;">Merci de renseigner les deux dates.</p>'; return; }
+
+  const debut = new Date(debutStr + 'T00:00:00');
+  const fin = new Date(finStr + 'T00:00:00');
+  if(fin < debut){ output.innerHTML = '<p style="color:#d1554a;font-size:12px;margin-top:10px;">La date de fin doit être après la date de début.</p>'; return; }
+
+  const sessions = [];
+
+  const onboardWeekday = debut.getDay();
+  const onboardYear = debut.getFullYear(), onboardMonth = debut.getMonth();
+  let curOnboard = new Date(debut);
+  while(curOnboard.getFullYear()===onboardYear && curOnboard.getMonth()===onboardMonth && curOnboard <= fin){
+    let dateISO = toISO(curOnboard);
+    let type = 'onboarding';
+    if(estFerme(dateISO)){
+      type = 'ferme';
+    } else if(estFerie(dateISO)){
+      const d2 = new Date(curOnboard);
+      d2.setDate(d2.getDate() + (5 - onboardWeekday));
+      dateISO = toISO(d2);
+    }
+    sessions.push({date: dateISO, type});
+    curOnboard.setDate(curOnboard.getDate() + 7);
+  }
+
+  const normalStart = new Date(onboardYear, onboardMonth + 1, 1);
+  if(normalStart <= fin){
+    const anneeFin = new Date(fin.getFullYear()+1, 8, 15);
+    let toutes = [];
+    let cur = new Date(normalStart);
+    const curDay = cur.getDay();
+    const diffInit = (weekdayTitre - curDay + 7) % 7;
+    cur.setDate(cur.getDate() + diffInit);
+    while(cur <= anneeFin){
+      toutes.push(new Date(cur));
+      cur.setDate(cur.getDate() + 7);
+    }
+
+    const dernierParMois = {};
+    toutes.filter(d => !estFerme(toISO(d))).forEach(d=>{
+      const key = d.getFullYear()+'-'+d.getMonth();
+      if(!dernierParMois[key] || d > dernierParMois[key]) dernierParMois[key] = d;
+    });
+
+    toutes.filter(d => d >= normalStart && d <= fin).forEach(d=>{
+      const key = d.getFullYear()+'-'+d.getMonth();
+      const estDernier = dernierParMois[key] && toISO(dernierParMois[key]) === toISO(d);
+      let dateISO = toISO(d);
+      let type = estDernier ? 'pres' : 'dist';
+      if(estFerme(dateISO)){
+        type = 'ferme';
+      } else if(estFerie(dateISO)){
+        const d2 = new Date(d);
+        d2.setDate(d2.getDate() + (5 - weekdayTitre));
+        dateISO = toISO(d2);
+      }
+      sessions.push({date: dateISO, type});
+    });
+  }
+
+  sessions.sort((a,b)=> a.date.localeCompare(b.date));
+
+  const parMois = {};
+  sessions.forEach(s=>{
+    const d = new Date(s.date+'T00:00:00');
+    const key = MOIS_FR[d.getMonth()] + ' ' + d.getFullYear();
+    if(!parMois[key]) parMois[key] = [];
+    parMois[key].push(s);
+  });
+
+  let html = '';
+  Object.keys(parMois).forEach(moisKey=>{
+    html += `<div class="cal-month"><h4>${moisKey}</h4>`;
+    parMois[moisKey].forEach(s=>{
+      const d = new Date(s.date+'T00:00:00');
+      const dateLabel = d.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'short'});
+      const badge = s.type === 'dist' ? '<span class="badge-mini dist">Distanciel</span>' : s.type === 'pres' ? '<span class="badge-mini pres">Présentiel</span>' : s.type === 'onboarding' ? '<span class="badge-mini onboarding">Onboarding</span>' : '<span class="badge-mini ferme">Fermé</span>';
+      html += `<div class="cal-session">${badge}<span>${dateLabel}</span></div>`;
+    });
+    html += `</div>`;
+  });
+  output.innerHTML = html || '<p style="font-size:12px;color:var(--gris);margin-top:10px;">Aucune séance sur cette période.</p>';
+}
+</script>
+</body>
+</html>
