@@ -357,11 +357,10 @@
   document.getElementById('hiddenForm').action = API_URL;
 
   let submissionInProgress = false;
-  let firstFrameLoad = true;
 
   document.getElementById('hiddenSubmitFrame').addEventListener('load', () => {
-    // Le tout premier "load" correspond à l'iframe vide au chargement de la page — on l'ignore.
-    if (firstFrameLoad) { firstFrameLoad = false; return; }
+    // On ignore tout chargement de l'iframe qui ne suit pas un envoi en cours
+    // (ex. le chargement initial de l'iframe vide à l'ouverture de la page).
     if (!submissionInProgress) return;
     submissionInProgress = false;
 
