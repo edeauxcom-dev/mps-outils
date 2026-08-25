@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Grille de montée en compétences — Négociateur Technico-Commercial — My Partner School</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bleu-primaire:#1a7bc4; --bleu-fonce:#115a91; --bleu-pale:#eaf4fb;
+    --encre:#1c2b36; --gris:#6b7b86; --or:#c98a1f; --vert:#2f9e6e;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:#f4f8fb;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--encre);padding:28px 16px 60px;}
+  .wrap{max-width:1000px;margin:0 auto;}
+
+  header{
+    background:linear-gradient(135deg,var(--bleu-primaire),var(--bleu-fonce));
+    border-radius:16px;padding:22px 24px;color:#fff;margin-bottom:18px;
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  }
+  header img{height:52px;background:#fff;border-radius:10px;padding:6px 10px;}
+  header .txt{flex:1;min-width:220px;}
+  header .eyebrow{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.85;font-weight:600;}
+  header h1{margin:5px 0 3px;font-size:20px;font-weight:700;}
+  header p{margin:0;font-size:12.5px;opacity:.9;}
+
+  .identite{
+    background:#fff;border-radius:14px;padding:16px 20px;margin-bottom:18px;
+    box-shadow:0 1px 3px rgba(17,90,145,.08);font-size:12.5px;
+  }
+  .identite-top{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 22px;
+    padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #eaf0f5;
+  }
+  .identite-visites{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0;
+  }
+  .visite-col{
+    display:flex;flex-direction:column;gap:8px;padding:0 18px;
+    border-left:1px solid #eaf0f5;
+  }
+  .visite-col:first-child{border-left:none;padding-left:0;}
+  .visite-col-label{
+    font-size:10.5px;font-weight:700;color:#fff;background:var(--bleu-primaire);
+    display:inline-block;padding:2px 9px;border-radius:20px;width:fit-content;
+    text-transform:uppercase;letter-spacing:.03em;
+  }
+  .visite-col-label .opt{font-weight:400;text-transform:none;letter-spacing:0;opacity:.85;font-size:9.5px;}
+  .identite .champ b{display:block;font-size:9.5px;color:var(--bleu-fonce);text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px;}
+  .identite .ligne{border-bottom:1px solid #dde4e9;height:16px;}
+
+  h2{font-size:15px;color:var(--bleu-fonce);margin:28px 0 12px;display:flex;align-items:center;gap:8px;}
+  h2::before{content:"";width:5px;height:18px;background:var(--bleu-primaire);border-radius:3px;display:inline-block;}
+
+  .legende{background:#fff;border-radius:14px;padding:18px 20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(17,90,145,.08);}
+  .legende-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;}
+  .niveau-card{border-radius:12px;padding:10px 6px 8px;text-align:center;background:var(--bleu-pale);}
+  .niveau-card.na{background:#f1f3f5;}
+  .niveau-card.ma{background:#fdf3df;}
+  .code{font-size:9.5px;font-weight:800;letter-spacing:.05em;color:#fff;background:var(--gris);border-radius:5px;padding:1px 6px;display:inline-block;margin-bottom:5px;}
+  .niveau-card.ec .code{background:var(--bleu-primaire);opacity:.75;}
+  .niveau-card.ac .code{background:var(--bleu-primaire);}
+  .niveau-card.ma .code{background:var(--or);}
+  .panier{width:38px;height:33px;margin:0 auto 5px;}
+  .panier svg{width:100%;height:100%;display:block;}
+  .niveau-label{font-size:10px;font-weight:700;color:var(--bleu-fonce);}
+  .niveau-card.na .niveau-label{color:var(--gris);}
+  .niveau-card.ma .niveau-label{color:var(--or);}
+
+  .table-scroll{overflow-x:auto;background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(17,90,145,.08);}
+  table{border-collapse:collapse;width:100%;min-width:820px;font-size:12px;}
+  thead tr:first-child th{background:var(--bleu-fonce);color:#fff;font-size:10.5px;padding:8px 6px;text-align:center;}
+  thead tr:last-child th{color:#fff;font-size:9.5px;font-weight:600;padding:5px 3px;text-align:center;}
+  thead tr:last-child th.v1{background:#8b98a2;}
+  thead tr:last-child th.v2{background:var(--bleu-primaire);}
+  thead tr:last-child th.v3{background:var(--or);}
+  thead tr:first-child th.v1-head{background:#6e7c86;}
+  thead tr:first-child th.v2-head{background:var(--bleu-fonce);}
+  thead tr:first-child th.v3-head{background:#a5701a;}
+  .visit-start{border-left-width:3px;border-left-style:solid;}
+  th.v1.visit-start, td.v1-cell.visit-start{border-left-color:#a9b3ba !important;}
+  th.v2.visit-start, td.v2-cell.visit-start{border-left-color:#6fabd8 !important;}
+  th.v3.visit-start, td.v3-cell.visit-start{border-left-color:#dcb268 !important;}
+  th.competence-col, td.competence-col{text-align:left;padding:8px 10px;min-width:210px;font-weight:600;color:var(--encre);background:var(--bleu-pale);font-size:11.5px;}
+  th.attendu-col, td.attendu-col{text-align:center;min-width:56px;background:#fff7e8;}
+  tbody td{padding:6px 3px;text-align:center;border-bottom:1px solid #eef2f5;}
+  tbody td.v1-cell{background:rgba(139,152,162,0.07);}
+  tbody td.v2-cell{background:rgba(26,123,196,0.06);}
+  tbody td.v3-cell{background:rgba(201,138,31,0.07);}
+  tbody tr:nth-child(even) td.v1-cell{background:rgba(139,152,162,0.13);}
+  tbody tr:nth-child(even) td.v2-cell{background:rgba(26,123,196,0.11);}
+  tbody tr:nth-child(even) td.v3-cell{background:rgba(201,138,31,0.13);}
+  .icon-row td.competence-col{border-bottom:none;}
+  .at-tag{display:block;font-size:8.5px;font-weight:700;color:var(--bleu-fonce);text-transform:uppercase;letter-spacing:.03em;}
+  .mini{width:22px;height:19px;margin:0 auto;}
+  .mini svg{width:100%;height:100%;}
+  .mini-clickable{cursor:pointer;transition:transform .1s;}
+  .mini-clickable:hover{transform:scale(1.18);}
+  .mini-clickable:active{transform:scale(0.92);}
+
+  .notes-row td{padding:0;background:#f8fbfd;border-bottom:2px solid var(--bleu-pale);}
+  .notes-row td.notes-spacer{background:var(--bleu-pale);}
+  .notes-cell{padding:6px 6px 8px;border-left:1px solid #e4ecf1;}
+  .notes-mini-field{margin-bottom:4px;}
+  .notes-mini-field b{font-size:7px;color:var(--bleu-fonce);text-transform:uppercase;letter-spacing:.02em;display:block;margin-bottom:1px;}
+  .notes-mini-line{border-bottom:1px dotted #c7d1d8;min-height:12px;font-size:9px;line-height:1.3;padding:1px 2px;outline:none;cursor:text;}
+  .notes-mini-line:empty:before{content:attr(data-placeholder);color:#c7d1d8;}
+  .notes-mini-line:focus{background:#fff;border-bottom:1px solid var(--bleu-primaire);}
+  .notes-visite-tag{font-size:7px;font-weight:800;color:#fff;background:var(--bleu-fonce);border-radius:4px;padding:0 5px;display:inline-block;margin-bottom:4px;}
+
+  .identite .ligne{border-bottom:1px solid #dde4e9;min-height:16px;outline:none;cursor:text;padding:1px 2px;}
+  .identite .ligne:empty:before{content:attr(data-placeholder);color:#dde4e9;}
+  .identite .ligne:focus{border-bottom:1px solid var(--bleu-primaire);background:var(--bleu-pale);}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  .tool-btn{
+    display:inline-flex;align-items:center;gap:6px;background:var(--bleu-primaire);color:#fff;border:none;border-radius:8px;
+    padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer;
+  }
+  .tool-btn.secondary{background:#fff;color:var(--bleu-fonce);border:1px solid var(--bleu-primaire);}
+  @media print{ .toolbar{display:none;} .recherche-panel{display:none;} }
+
+  .recherche-panel{
+    background:var(--bleu-pale);border-radius:14px;padding:14px 18px;margin-bottom:16px;
+    display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;
+  }
+  .recherche-panel .champ-recherche{display:flex;flex-direction:column;gap:3px;min-width:160px;}
+  .recherche-panel .champ-recherche label{font-size:9.5px;font-weight:700;color:var(--bleu-fonce);text-transform:uppercase;letter-spacing:.03em;}
+  .recherche-panel input{
+    border:1px solid #cfe0ee;border-radius:8px;padding:7px 10px;font-size:12.5px;font-family:inherit;
+    background:#fff;outline:none;
+  }
+  .recherche-panel input:focus{border-color:var(--bleu-primaire);}
+  .recherche-status{font-size:11.5px;color:var(--bleu-fonce);font-weight:600;}
+  .recherche-status.err{color:#c0392b;}
+  .recherche-status.ok{color:#2f9e6e;}
+
+  .chart-panel{background:#fff;border-radius:16px;padding:18px 20px;box-shadow:0 1px 3px rgba(17,90,145,.08);margin-bottom:16px;}
+  .chart-panel h3{font-size:13px;color:var(--bleu-fonce);margin:0 0 10px;}
+  .legend-row{display:flex;justify-content:center;gap:14px;margin-top:10px;flex-wrap:wrap;font-size:11.5px;}
+  .legend-item{display:flex;align-items:center;gap:5px;}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
+
+  .callout{background:var(--bleu-pale);border-radius:12px;padding:14px 16px;font-size:12.5px;color:var(--bleu-fonce);margin:14px 0 20px;line-height:1.5;}
+
+  .mentions{font-size:10.5px;color:var(--gris);background:#fff;border-radius:10px;padding:12px 16px;margin-top:26px;line-height:1.6;}
+
+  footer{text-align:center;font-size:11px;color:var(--gris);margin-top:20px;}
+
+  @media print{
+    @page{ size: A4 landscape; margin: 10mm; }
+    body{background:#fff;padding:0;font-size:10px;}
+    .wrap{max-width:100%;}
+    header{border-radius:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .chart-panel, .table-scroll, .legende, .identite{box-shadow:none;}
+    .icon-row, .notes-row{break-inside:avoid; page-break-inside:avoid;}
+    table{min-width:0;font-size:9px;}
+    .mini{width:17px;height:15px;}
+    .notes-cell{padding:4px;}
+    h2{margin:14px 0 8px;}
+    .chart-panel{page-break-inside:avoid;}
+    .chart-panel:first-of-type{page-break-before:always;}
+    .mentions, .callout{break-inside:avoid;}
+  }
+  .print-btn{
+    display:inline-block;background:var(--bleu-primaire);color:#fff;border:none;border-radius:8px;
+    padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer;margin-bottom:16px;
+  }
+  @media print{ .print-btn{display:none;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <img src="data:image/jpeg;base64,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" alt="My Partner School">
+    <div class="txt">
+      <div class="eyebrow">CFA My Partner · 27 boulevard Charles Moretti, 13014 Marseille</div>
+      <h1>Grille de montée en compétences — Négociateur Technico-Commercial</h1>
+      <p>Titre professionnel NTC · REAC TP-00338</p>
+    </div>
+  </header>
+
+  <div class="recherche-panel" id="recherche-panel">
+    <div class="champ-recherche">
+      <label>Prénom</label>
+      <input type="text" id="search-prenom" placeholder="Prénom de l'apprenti·e">
+    </div>
+    <div class="champ-recherche">
+      <label>Nom</label>
+      <input type="text" id="search-nom" placeholder="Nom de l'apprenti·e">
+    </div>
+    <button class="tool-btn" onclick="chargerFiche()">🔎 Charger la fiche existante</button>
+    <span class="recherche-status" id="recherche-status"></span>
+  </div>
+
+  <div class="toolbar">
+    <button class="tool-btn" onclick="enregistrerSurServeur()">☁️ Enregistrer sur le serveur (fin de visite)</button>
+    <button class="tool-btn" onclick="window.print()">🖨️ Imprimer / Exporter en PDF</button>
+    <button class="tool-btn secondary" onclick="exportData()">💾 Exporter en local (sauvegarde)</button>
+    <button class="tool-btn secondary" onclick="document.getElementById('import-input').click()">📂 Reprendre depuis un fichier local</button>
+    <input type="file" id="import-input" accept="application/json" style="display:none;" onchange="importData(this.files[0])">
+  </div>
+
+  <!-- Formulaire caché : contourne les restrictions CORS d'Apps Script sur les requêtes POST -->
+  <iframe name="hidden-submit-frame" style="display:none;"></iframe>
+  <form id="hidden-submit-form" method="POST" target="hidden-submit-frame" style="display:none;">
+    <input type="hidden" name="payload">
+  </form>
+
+  <div class="identite" id="identite-block">
+    <div class="identite-top">
+      <div class="champ"><b>Prénom apprenti·e</b><div class="ligne" contenteditable="true" data-id="apprenti_prenom" data-placeholder="Prénom"></div></div>
+      <div class="champ"><b>Nom apprenti·e</b><div class="ligne" contenteditable="true" data-id="apprenti_nom" data-placeholder="Nom"></div></div>
+      <div class="champ"><b>Entreprise</b><div class="ligne" contenteditable="true" data-id="entreprise" data-placeholder="Raison sociale"></div></div>
+      <div class="champ"><b>Tuteur / Tutrice</b><div class="ligne" contenteditable="true" data-id="tuteur" data-placeholder="Nom Prénom"></div></div>
+    </div>
+    <div class="identite-visites">
+      <div class="visite-col">
+        <div class="visite-col-label">Visite 1</div>
+        <div class="champ"><b>Date</b><div class="ligne" contenteditable="true" data-id="date1" data-placeholder="JJ/MM/AAAA"></div></div>
+        <div class="champ"><b>Suivi CFA</b><div class="ligne" contenteditable="true" data-id="cfa1" data-placeholder="Nom Prénom"></div></div>
+      </div>
+      <div class="visite-col">
+        <div class="visite-col-label">Visite 2</div>
+        <div class="champ"><b>Date</b><div class="ligne" contenteditable="true" data-id="date2" data-placeholder="JJ/MM/AAAA"></div></div>
+        <div class="champ"><b>Suivi CFA</b><div class="ligne" contenteditable="true" data-id="cfa2" data-placeholder="Nom Prénom"></div></div>
+      </div>
+      <div class="visite-col">
+        <div class="visite-col-label">Visite 3 <span class="opt">si réalisée</span></div>
+        <div class="champ"><b>Date</b><div class="ligne" contenteditable="true" data-id="date3" data-placeholder="JJ/MM/AAAA"></div></div>
+        <div class="champ"><b>Suivi CFA</b><div class="ligne" contenteditable="true" data-id="cfa3" data-placeholder="Nom Prénom"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Comment utiliser cette grille</h2>
+  <div class="callout">
+    À chaque visite tripartite, l'apprenti, le tuteur et le formateur CFA positionnent ensemble chaque compétence sur l'échelle ci-dessous — un seul document rempli progressivement sur toute l'année, pour visualiser la progression réelle et nourrir la discussion. L'attendu en fin de parcours varie selon les compétences : il ne s'agit pas d'être "expert partout", mais d'atteindre le niveau réellement exigé par le métier de conseiller de vente. Le formateur CFA en charge du suivi peut varier d'une visite à l'autre (ex : Mohamed pour la visite 1, Greg pour la 2, Stéphanie pour la 3…) — c'est pourquoi son nom est renseigné visite par visite dans le bloc d'identité ci-dessous, plutôt qu'une seule fois pour l'année.<br/><br/>
+    <b>⚠️ La visite 3 n'est pas systématique.</b> Elle est réalisée uniquement si l'on constate une absence d'évolution entre la visite 1 et la visite 2. Les visites 1 et 2 sont garanties ; la 3ᵉ dépendra de la disponibilité de l'équipe et ne pourra pas toujours être assurée.
+  </div>
+
+  <h2>Échelle de compétence</h2>
+  <div class="legende">
+    <div class="legende-grid">
+      <div class="niveau-card na"><span class="code">NA</span><div class="panier"><svg viewBox="0 0 46 40"><path d="M8 15h30l-3.2 21a3 3 0 0 1-3 2.5H14.2a3 3 0 0 1-3-2.5L8 15z" fill="none" stroke="#8b98a2" stroke-width="2.6" stroke-dasharray="3 3"/><path d="M14 15 19.5 4h7l5.5 11" fill="none" stroke="#8b98a2" stroke-width="2.6" stroke-linecap="round"/></svg></div><div class="niveau-label">Non acquis</div></div>
+      <div class="niveau-card ec"><span class="code">EC</span><div class="panier"><svg viewBox="0 0 46 40"><path d="M8 15h30l-3.2 21a3 3 0 0 1-3 2.5H14.2a3 3 0 0 1-3-2.5L8 15z" fill="none" stroke="#1a7bc4" stroke-width="2.6"/><path d="M14 15 19.5 4h7l5.5 11" fill="none" stroke="#1a7bc4" stroke-width="2.6" stroke-linecap="round"/><circle cx="23" cy="26" r="4.2" fill="#1a7bc4"/></svg></div><div class="niveau-label">En cours d'acquisition</div></div>
+      <div class="niveau-card ac"><span class="code">AC</span><div class="panier"><svg viewBox="0 0 46 40"><path d="M8 15h30l-3.2 21a3 3 0 0 1-3 2.5H14.2a3 3 0 0 1-3-2.5L8 15z" fill="none" stroke="#1a7bc4" stroke-width="2.6"/><path d="M14 15 19.5 4h7l5.5 11" fill="none" stroke="#1a7bc4" stroke-width="2.6" stroke-linecap="round"/><circle cx="17.5" cy="27" r="3.6" fill="#1a7bc4"/><circle cx="28.5" cy="27" r="3.6" fill="#1a7bc4"/><rect x="19.5" y="20" width="7" height="7" rx="1.4" fill="#1a7bc4"/></svg></div><div class="niveau-label">Acquis</div></div>
+      <div class="niveau-card ma"><span class="code">MA</span><div class="panier"><svg viewBox="0 0 46 40"><path d="M8 15h30l-3.2 21a3 3 0 0 1-3 2.5H14.2a3 3 0 0 1-3-2.5L8 15z" fill="#c98a1f" stroke="#c98a1f" stroke-width="2.6"/><path d="M14 15 19.5 4h7l5.5 11" fill="none" stroke="#c98a1f" stroke-width="2.6" stroke-linecap="round"/><circle cx="35" cy="9" r="5" fill="#fff"/><path d="M32.8 9.2 34.2 10.6 37 7.6" stroke="#c98a1f" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="niveau-label">Maîtrisé</div></div>
+    </div>
+  </div>
+
+  <h2>Grille des 14 compétences · REAC TP-00338</h2>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2" class="competence-col" style="background:var(--bleu-fonce);color:#fff;">Compétence</th>
+          <th rowspan="2" class="attendu-col" style="background:var(--bleu-fonce);color:#fff;">Attendu</th>
+          <th colspan="3" class="v1-head">Visite 1 · Positionnement</th><th colspan="3" class="v2-head">Visite 2</th><th colspan="3" class="v3-head">Visite 3 (si réalisée)</th>
+        </tr>
+        <tr>
+          <th class="v1 visit-start">App.</th><th class="v1">Tut.</th><th class="v1">CFA</th>
+          <th class="v2 visit-start">App.</th><th class="v2">Tut.</th><th class="v2">CFA</th>
+          <th class="v3 visit-start">App.</th><th class="v3">Tut.</th><th class="v3">CFA</th>
+        </tr>
+      </thead>
+      <tbody id="grid-body"></tbody>
+    </table>
+  </div>
+
+  <h2>Synthèse visuelle de la progression</h2>
+  <div class="callout">Un graphique par visite. Chaque compétence a 4 barres : l'attendu (repère gris) et les 3 regards. Plus une barre colorée s'approche ou dépasse le repère gris, plus le niveau visé est atteint.</div>
+
+  <div class="chart-panel"><h3>Visite 1 — Positionnement initial</h3><canvas id="b1" height="360"></canvas></div>
+  <div class="chart-panel"><h3>Visite 2</h3><canvas id="b2" height="360"></canvas></div>
+  <div class="chart-panel"><h3>Visite 3 (si réalisée)</h3><canvas id="b3" height="360"></canvas></div>
+  <div class="legend-row">
+    <div class="legend-item"><span class="dot" style="background:#dde4e9;"></span>Attendu fin de parcours</div>
+    <div class="legend-item"><span class="dot" style="background:#2f9e6e;"></span>Apprenti</div>
+    <div class="legend-item"><span class="dot" style="background:#1a7bc4;"></span>Tuteur</div>
+    <div class="legend-item"><span class="dot" style="background:#c98a1f;"></span>CFA</div>
+  </div>
+
+  <div class="mentions">
+    <strong>Note pédagogique.</strong> Les 14 compétences listées ci-dessus sont extraites du REAC TP-00338 (NTC). L'attendu en fin de parcours est différencié par compétence (Acquis ou Maîtrisé selon son poids dans le métier) et relève d'un calibrage pédagogique de My Partner School, discuté et validé avec Stéphanie — même logique que la grille CV. Le REAC définit des critères de performance certificatifs, non une échelle de progression — ce document reste un outil de suivi interne, distinct de l'évaluation certificative du titre professionnel.
+  </div>
+
+  <footer>CFA My Partner — NDA : 931320061513 — Siret : 91433349700016 — N° UAI : 134520T</footer>
+</div>
+
+<script>
+const NIV = ["NA","EC","AC","MA"];
+const NIV_FULL = ["Non acquis","En cours d'acquisition","Acquis","Maîtrisé"];
+const TITRE_CODE = "NTC";
+// URL du déploiement Apps Script (Web App /exec) — à coller une fois le script installé.
+// Voir la procédure fournie par Stéphanie / Claude pour l'installation.
+const API_URL = "https://script.google.com/macros/s/AKfycbxmQiODE5S9Gp9CWiuJlztUGvAq4GkzPcT_Q2SBXHXWCcJm7CcHG3_Hf6xzsJ6Msfagcg/exec";
+
+function basketSVG(level){
+  if(level===0) return `<svg viewBox="0 0 46 40"><path d="M8 15h30l-3.2 21a3 3 0 0 1-3 2.5H14.2a3 3 0 0 1-3-2.5L8 15z" fill="none" stroke="#8b98a2" stroke-width="3" stroke-dasharray="3 3"/></svg>`;
+  if(level===1) return `<svg viewBox="0 0 46 40"><path d="M8 15h30l-3.2 21a3 3 0 0 1-3 2.5H14.2a3 3 0 0 1-3-2.5L8 15z" fill="none" stroke="#1a7bc4" stroke-width="3"/><circle cx="23" cy="26" r="4.2" fill="#1a7bc4"/></svg>`;
+  if(level===2) return `<svg viewBox="0 0 46 40"><path d="M8 15h30l-3.2 21a3 3 0 0 1-3 2.5H14.2a3 3 0 0 1-3-2.5L8 15z" fill="none" stroke="#1a7bc4" stroke-width="3"/><circle cx="17.5" cy="27" r="3.6" fill="#1a7bc4"/><circle cx="28.5" cy="27" r="3.6" fill="#1a7bc4"/><rect x="19.5" y="20" width="7" height="7" rx="1.4" fill="#1a7bc4"/></svg>`;
+  return `<svg viewBox="0 0 46 40"><path d="M8 15h30l-3.2 21a3 3 0 0 1-3 2.5H14.2a3 3 0 0 1-3-2.5L8 15z" fill="#c98a1f" stroke="#c98a1f" stroke-width="3"/><circle cx="35" cy="9" r="5" fill="#fff"/><path d="M32.8 9.2 34.2 10.6 37 7.6" stroke="#c98a1f" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+// Compétences réelles REAC NTC (TP-00338) — extraites du référentiel officiel.
+// Attendus calibrés avec Stéphanie, compétence par compétence (calibrage pédagogique My Partner,
+// pas une exigence REAC littérale) — même logique que la grille CV.
+// niveaux de visite à 0 (Non acquis) par défaut : grille vierge, prête à l'usage
+const comps = [
+  {at:"AT1", nom:"Assurer une veille commerciale", attendu:2},
+  {at:"AT1", nom:"Concevoir et organiser un plan d'actions commerciales", attendu:2},
+  {at:"AT1", nom:"Prospecter un secteur défini", attendu:2},
+  {at:"AT1", nom:"Analyser ses performances, élaborer et mettre en œuvre des actions correctives", attendu:1},
+  {at:"AT2", nom:"Représenter l'entreprise et valoriser son image", attendu:2},
+  {at:"AT2", nom:"Concevoir une proposition technique et commerciale", attendu:2},
+  {at:"AT2", nom:"Négocier une solution technique et commerciale", attendu:3},
+  {at:"AT2", nom:"Réaliser le bilan, ajuster son activité commerciale et rendre compte", attendu:2},
+  {at:"AT2", nom:"Optimiser la gestion de la relation client", attendu:2},
+  {at:"Transversale", nom:"Communiquer", attendu:3},
+  {at:"Transversale", nom:"Adopter un comportement orienté vers l'autre", attendu:3},
+  {at:"Transversale", nom:"Rechercher un accord", attendu:3},
+  {at:"Transversale", nom:"Evaluer ses actions", attendu:2},
+  {at:"Transversale", nom:"Mettre en œuvre une démarche de résolution de problème", attendu:2},
+].map(c => Object.assign(c, {v1:[0,0,0], v2:[0,0,0], v3:[0,0,0]}));
+
+const visitClasses = ['v1-cell','v2-cell','v3-cell'];
+const visiteLabels = ['Visite 1','Visite 2','Visite 3'];
+const visiteColors = ['#8b98a2','#1a7bc4','#c98a1f'];
+const visiteBg = ['rgba(139,152,162,0.06)','rgba(26,123,196,0.05)','rgba(201,138,31,0.06)'];
+const noteFields = [
+  {key:'pf', label:"Points forts"},
+  {key:'ax', label:"Axes d'amélioration"},
+  {key:'ac', label:"Actions (entreprise + apprenti)"},
+];
+const charts = {};
+
+function renderGrid(){
+  const tbody = document.getElementById('grid-body');
+  tbody.innerHTML = '';
+  comps.forEach((c, ci)=>{
+    const trIcons = document.createElement('tr');
+    trIcons.className = 'icon-row';
+    const cells = [];
+    cells.push(`<td class="competence-col"><span class="at-tag">${c.at}</span>${c.nom}</td>`);
+    cells.push(`<td class="attendu-col"><div class="mini">${basketSVG(c.attendu)}</div><div style="font-size:8px;color:var(--gris);">${NIV[c.attendu]}</div></td>`);
+    [c.v1,c.v2,c.v3].forEach((v,vi)=> v.forEach((level,ri)=> cells.push(
+      `<td class="${visitClasses[vi]}${ri===0?' visit-start':''}"><div class="mini mini-clickable" data-ci="${ci}" data-vi="${vi}" data-ri="${ri}" title="Cliquer pour changer le niveau">${basketSVG(level)}</div></td>`
+    )));
+    trIcons.innerHTML = cells.join('');
+    tbody.appendChild(trIcons);
+
+    const trNotes = document.createElement('tr');
+    trNotes.className = 'notes-row';
+    const notesCells = ['<td colspan="2" class="notes-spacer"></td>'];
+    const notesBorderColors = ['#a9b3ba','#6fabd8','#dcb268'];
+    visiteLabels.forEach((lbl,vi)=>{
+      const fieldsHtml = noteFields.map(f=>{
+        const savedText = (c.notes && c.notes[vi] && c.notes[vi][f.key]) || '';
+        return `<div class="notes-mini-field"><b>${f.label}</b><div class="notes-mini-line" contenteditable="true" data-ci="${ci}" data-vi="${vi}" data-field="${f.key}" data-placeholder="—">${savedText}</div></div>`;
+      }).join('');
+      notesCells.push(`<td colspan="3" class="notes-cell" style="background:${visiteBg[vi]};border-left:3px solid ${notesBorderColors[vi]};">
+        <div class="notes-visite-tag" style="background:${visiteColors[vi]};">${lbl}</div>
+        ${fieldsHtml}
+      </td>`);
+    });
+    trNotes.innerHTML = notesCells.join('');
+    tbody.appendChild(trNotes);
+  });
+}
+
+// --- Clic sur un picto : fait avancer le niveau d'un cran (délégation d'événements) ---
+document.getElementById('grid-body').addEventListener('click', (e)=>{
+  const target = e.target.closest('.mini-clickable');
+  if(!target) return;
+  const ci = +target.dataset.ci, vi = +target.dataset.vi, ri = +target.dataset.ri;
+  const visitKey = ['v1','v2','v3'][vi];
+  comps[ci][visitKey][ri] = (comps[ci][visitKey][ri] + 1) % 4;
+  target.innerHTML = basketSVG(comps[ci][visitKey][ri]);
+  target.title = NIV_FULL[comps[ci][visitKey][ri]] + " — cliquer pour changer";
+  updateChart(vi);
+});
+
+// --- Saisie des notes : synchronise directement dans le modèle comps ---
+document.getElementById('grid-body').addEventListener('input', (e)=>{
+  const el = e.target;
+  if(!el.classList || !el.classList.contains('notes-mini-line')) return;
+  const ci = +el.dataset.ci, vi = +el.dataset.vi, field = el.dataset.field;
+  if(!comps[ci].notes) comps[ci].notes = [{},{},{}];
+  if(!comps[ci].notes[vi]) comps[ci].notes[vi] = {};
+  comps[ci].notes[vi][field] = el.innerText;
+});
+
+// --- 3 graphiques en barres, mis à jour en direct au clic ---
+const labels = comps.map(c=>c.nom);
+function makeBarChart(canvasId, visitKey, vi){
+  charts[vi] = new Chart(document.getElementById(canvasId), {
+    type:'bar',
+    data:{
+      labels: labels,
+      datasets:[
+        {label:'Attendu', data:comps.map(c=>c.attendu), backgroundColor:'#dde4e9'},
+        {label:'Apprenti', data:comps.map(c=>c[visitKey][0]), backgroundColor:'#2f9e6e'},
+        {label:'Tuteur', data:comps.map(c=>c[visitKey][1]), backgroundColor:'#1a7bc4'},
+        {label:'CFA', data:comps.map(c=>c[visitKey][2]), backgroundColor:'#c98a1f'},
+      ]
+    },
+    options:{
+      indexAxis:'y',
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ min:0, max:3, ticks:{ stepSize:1, callback:(v)=>NIV[v]||'' }, grid:{color:'#eef2f5'} },
+        y:{ ticks:{ font:{size:10} }, grid:{display:false} }
+      }
+    }
+  });
+}
+function updateChart(vi){
+  const visitKey = ['v1','v2','v3'][vi];
+  const chart = charts[vi];
+  chart.data.datasets[1].data = comps.map(c=>c[visitKey][0]);
+  chart.data.datasets[2].data = comps.map(c=>c[visitKey][1]);
+  chart.data.datasets[3].data = comps.map(c=>c[visitKey][2]);
+  chart.update();
+}
+
+renderGrid();
+makeBarChart('b1','v1',0);
+makeBarChart('b2','v2',1);
+makeBarChart('b3','v3',2);
+
+// --- Construction / application du payload (partagé entre export local et serveur) ---
+function buildPayload(){
+  const identite = {};
+  document.querySelectorAll('#identite-block .ligne').forEach(el=>{
+    identite[el.dataset.id] = el.innerText;
+  });
+  return {
+    titre: TITRE_CODE, document: "Grille de montée en compétences",
+    exportedAt: new Date().toISOString(),
+    identite: identite,
+    competences: comps.map(c=>({nom:c.nom, v1:c.v1, v2:c.v2, v3:c.v3, notes:c.notes||[{},{},{}]}))
+  };
+}
+
+function applyPayload(data){
+  if(data.identite){
+    document.querySelectorAll('#identite-block .ligne').forEach(el=>{
+      el.innerText = data.identite[el.dataset.id] || '';
+    });
+  }
+  if(Array.isArray(data.competences)){
+    data.competences.forEach((saved, i)=>{
+      if(!comps[i]) return;
+      comps[i].v1 = saved.v1 || [0,0,0];
+      comps[i].v2 = saved.v2 || [0,0,0];
+      comps[i].v3 = saved.v3 || [0,0,0];
+      comps[i].notes = saved.notes || [{},{},{}];
+    });
+  }
+  renderGrid();
+  updateChart(0); updateChart(1); updateChart(2);
+}
+
+// --- Export / Import local (sauvegarde de secours, sans serveur) ---
+function exportData(){
+  const payload = buildPayload();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  const prenom = (payload.identite.apprenti_prenom || '').trim();
+  const nom = (payload.identite.apprenti_nom || '').trim();
+  const nomApprenti = (prenom + '_' + nom).replace(/^_+|_+$/g,'').replace(/\s+/g,'_') || 'apprenti';
+  a.href = URL.createObjectURL(blob);
+  a.download = `grille_${TITRE_CODE}_${nomApprenti}_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function importData(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const data = JSON.parse(e.target.result);
+      applyPayload(data);
+      alert('Données rechargées depuis le fichier local — la grille reflète la dernière visite enregistrée.');
+    }catch(err){
+      alert("Fichier invalide ou corrompu : impossible de recharger les données.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+// --- Chargement / enregistrement partagés (Google Apps Script + Google Sheet) ---
+let submissionInProgress = false;
+
+function setStatus(msg, kind){
+  const el = document.getElementById('recherche-status');
+  el.textContent = msg;
+  el.className = 'recherche-status' + (kind ? ' ' + kind : '');
+}
+
+async function chargerFiche(){
+  const prenom = document.getElementById('search-prenom').value.trim();
+  const nom = document.getElementById('search-nom').value.trim();
+  if(!prenom || !nom){
+    setStatus("Renseigne le prénom ET le nom pour éviter les homonymes.", 'err');
+    return;
+  }
+  if(!API_URL || API_URL.indexOf('COLLE_ICI') !== -1){
+    setStatus("Backend non configuré — colle l'URL Apps Script dans API_URL.", 'err');
+    return;
+  }
+  setStatus("Recherche en cours…", '');
+  try{
+    const url = `${API_URL}?prenom=${encodeURIComponent(prenom)}&nom=${encodeURIComponent(nom)}&titre=${encodeURIComponent(TITRE_CODE)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error || 'Erreur serveur');
+    if(!json.data || !json.data.length){
+      setStatus("Aucune fiche existante pour cet apprenti — grille vierge, prête à démarrer.", '');
+      return;
+    }
+    // La ligne la plus récente contient l'état complet le plus à jour (le backend trie déjà par date décroissante).
+    const derniere = json.data[0];
+    const payload = JSON.parse(derniere['Payload JSON']);
+    applyPayload(payload);
+    setStatus(`Fiche chargée — dernière sauvegarde le ${new Date(derniere['Horodatage']).toLocaleString('fr-FR')}.`, 'ok');
+  }catch(err){
+    setStatus("Impossible de charger la fiche : " + err.message, 'err');
+  }
+}
+
+function enregistrerSurServeur(){
+  if(submissionInProgress) return;
+  if(!API_URL || API_URL.indexOf('COLLE_ICI') !== -1){
+    alert("Backend non configuré — colle l'URL Apps Script dans API_URL avant d'enregistrer sur le serveur.");
+    return;
+  }
+  const payload = buildPayload();
+  const prenom = (payload.identite.apprenti_prenom || '').trim();
+  const nom = (payload.identite.apprenti_nom || '').trim();
+  if(!prenom || !nom){
+    alert("Renseigne le prénom ET le nom de l'apprenti·e avant d'enregistrer sur le serveur.");
+    return;
+  }
+  submissionInProgress = true;
+  const form = document.getElementById('hidden-submit-form');
+  form.action = API_URL;
+  form.payload.value = JSON.stringify(payload);
+  form.submit();
+  setTimeout(()=>{
+    submissionInProgress = false;
+    setStatus("Enregistré sur le serveur ✅ — les autres formateurs pourront charger cette version.", 'ok');
+  }, 900);
+}
+</script>
+</body>
+</html>
