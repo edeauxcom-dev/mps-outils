@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tuto — Mettre à jour mes disponibilités</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#0E70B7; --blue-dark:#0A4F80; --bg:#F7F9FB;
+    --card:#fff; --line:#E1E6EA; --muted:#666;
+    --ok:#2F9E62; --gold:#C9A84C; --teal:#2A7F7F;
+    --ink:#1A1A1A;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;}
+  
+  /* HEADER */
+  header{background:linear-gradient(135deg,var(--blue-dark),var(--blue));padding:32px 24px;text-align:center;}
+  header img{height:52px;margin-bottom:16px;background:#fff;border-radius:10px;padding:8px 14px;}
+  header h1{font-family:'Cormorant Garamond',serif;font-size:28px;color:#fff;margin:0 0 8px;}
+  header p{color:#CFE3F2;font-size:14px;margin:0;}
+  
+  /* SLACK MSG */
+  .slack-box{max-width:680px;margin:32px auto 0;padding:0 20px;}
+  .slack-card{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .slack-header{background:#4A154B;padding:12px 16px;display:flex;align-items:center;gap:10px;}
+  .slack-header .channel{color:#fff;font-weight:700;font-size:14px;}
+  .slack-header .app{color:rgba(255,255,255,.7);font-size:12px;}
+  .slack-msg{padding:16px 20px;}
+  .slack-msg .author{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .slack-avatar{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--teal),var(--blue));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0;}
+  .slack-author-name{font-weight:700;font-size:14px;}
+  .slack-time{font-size:11px;color:var(--muted);}
+  .slack-text{font-size:14px;line-height:1.6;white-space:pre-line;}
+  .slack-text strong{font-weight:700;}
+  .slack-text .emoji{font-size:16px;}
+
+  /* STEPS */
+  .steps{max-width:680px;margin:32px auto;padding:0 20px 60px;}
+  h2{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--blue-dark);margin:0 0 20px;}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:20px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+  .step-header{display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--blue-dark);}
+  .step-num{width:32px;height:32px;border-radius:50%;background:var(--gold);color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .step-title{color:#fff;font-weight:700;font-size:15px;}
+  .step-body{padding:16px 20px;}
+  .step-body p{margin:0 0 12px;font-size:14px;color:var(--ink);}
+  .step-body p:last-child{margin:0;}
+  .step-body .tip{background:#EAF4F1;border-left:3px solid var(--teal);border-radius:0 6px 6px 0;padding:10px 14px;font-size:13px;color:#1B5757;margin-top:12px;}
+  .step-body .warn{background:#FFF6E2;border-left:3px solid var(--gold);border-radius:0 6px 6px 0;padding:10px 14px;font-size:13px;color:#7A5E1E;margin-top:12px;}
+
+  /* MOCK UI */
+  .mock{background:#F7F9FB;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:12px;font-size:13px;}
+  .mock-header{background:var(--blue-dark);border-radius:6px;padding:10px 14px;color:#fff;font-weight:700;font-size:13px;margin-bottom:10px;}
+  .mock-field{margin-bottom:8px;}
+  .mock-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
+  .mock-select{background:#fff;border:1px solid var(--line);border-radius:6px;padding:9px 12px;font-size:14px;color:var(--ink);display:flex;align-items:center;justify-content:space-between;}
+  .mock-select .arrow{color:var(--muted);}
+  .mock-calendar{border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-top:10px;}
+  .mock-cal-head{background:var(--blue-dark);color:#fff;display:grid;grid-template-columns:60px 1fr 1fr 1fr 130px;font-size:11px;font-weight:700;text-transform:uppercase;}
+  .mock-cal-head div{padding:8px;border-right:1px solid rgba(255,255,255,.15);}
+  .mock-cal-row{display:grid;grid-template-columns:60px 1fr 1fr 1fr 130px;border-bottom:1px solid var(--line);}
+  .mock-cal-row:last-child{border:none;}
+  .mock-cal-row div{padding:8px;border-right:1px solid var(--line);font-size:12px;}
+  .mock-cal-row .semaine{font-weight:700;color:var(--blue-dark);font-size:11px;}
+  .mock-cb{display:flex;align-items:center;gap:6px;}
+  .mock-cb input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue);}
+  .mock-badge-pres{display:inline-block;background:var(--gold);color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:8px;margin-top:3px;}
+  .mock-badge-couvert{display:inline-block;background:#E2F0E8;color:#2F7A52;font-size:9px;font-weight:700;padding:2px 5px;border-radius:8px;margin-top:3px;}
+  .mock-btn{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:10px 18px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;margin-top:10px;}
+  .pres-cell{background:#FFF9EC;border-left:3px solid var(--gold)!important;}
+  .couvert-cell{opacity:.6;}
+  .arrow-annot{text-align:center;font-size:22px;margin:6px 0;}
+  .annot{background:#FEF3C7;border:1px solid var(--gold);border-radius:6px;padding:8px 12px;font-size:12px;color:#92400E;margin-top:6px;display:flex;align-items:flex-start;gap:6px;}
+
+  footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);}
+  footer span{color:var(--teal);font-weight:700;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🗓️ Mettre à jour mes dispos</h1>
+  <p>Guide rapide — My Partner School · Formateurs</p>
+</header>
+
+
+
+<!-- STEPS -->
+<div class="steps">
+  <h2 style="margin-top:32px;">📋 Comment faire — étape par étape</h2>
+
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <div class="step-title">Accéder à l'outil depuis le hub</div>
+    </div>
+    <div class="step-body">
+      <p>Depuis votre hub habituel, cliquez sur l'onglet <strong>Formateurs</strong> puis sur la carte <strong>"Disponibilités formateurs"</strong>.</p>
+      <div class="mock">
+        <div class="mock-header">🔗 Hub My Partner School</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          <div style="background:var(--blue);color:#fff;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;">🧑‍🏫 Formateurs</div>
+          <div style="background:#f0f0f0;border-radius:8px;padding:8px 14px;font-size:13px;color:var(--muted);">🗂️ Admin</div>
+          <div style="background:#f0f0f0;border-radius:8px;padding:8px 14px;font-size:13px;color:var(--muted);">🎓 Pédagogie</div>
+        </div>
+        <div style="background:#fff;border:1.5px solid var(--blue);border-radius:10px;padding:12px;max-width:240px;">
+          <div style="font-size:20px;margin-bottom:4px;">🗓️</div>
+          <div style="font-weight:700;font-size:13px;">Disponibilités formateurs</div>
+          <div style="font-size:11px;color:var(--muted);margin:4px 0 8px;">Outil de saisie des disponibilités</div>
+          <div style="font-size:11px;color:var(--blue);font-weight:700;">Ouvrir l'outil →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">2</div>
+      <div class="step-title">Choisir son nom et la période</div>
+    </div>
+    <div class="step-body">
+      <p>Sélectionnez <strong>votre nom</strong> dans la liste déroulante, choisissez une <strong>date de début</strong> (la semaine prochaine par défaut) et la <strong>durée</strong> souhaitée.</p>
+      <div class="mock">
+        <div class="mock-field">
+          <label>Nom du formateur</label>
+          <div class="mock-select">Grégory GRECO <span class="arrow">▼</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="mock-field">
+            <label>Début de la période</label>
+            <div class="mock-select">15/09/2026</div>
+          </div>
+          <div class="mock-field">
+            <label>Sur combien de temps ?</label>
+            <div class="mock-select">6 mois <span class="arrow">▼</span></div>
+          </div>
+        </div>
+        <button class="mock-btn">Générer mon calendrier</button>
+      </div>
+      <div class="tip">💡 <strong>Conseil :</strong> choisissez 6 mois si vous pouvez — ça nous aide à planifier sereinement et vous n'avez pas à revenir tous les 3 mois !</div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <div class="step-title">Comprendre le calendrier</div>
+    </div>
+    <div class="step-body">
+      <p>Le calendrier affiche toutes les semaines. Repérez bien les <strong>deux types de cases</strong> :</p>
+      <div class="mock">
+        <div class="mock-calendar">
+          <div class="mock-cal-head">
+            <div>Semaine</div>
+            <div>Lundi NTC</div>
+            <div>Mardi CC/CV</div>
+            <div>Mercredi MEM</div>
+            <div>Regroupement</div>
+          </div>
+          <div class="mock-cal-row">
+            <div class="semaine">S5<br>05/10</div>
+            <div class="mock-cb"><input type="checkbox" checked><div>05/10</div></div>
+            <div class="mock-cb"><input type="checkbox" checked><div>06/10</div></div>
+            <div class="mock-cb"><input type="checkbox" checked><div>07/10</div></div>
+            <div>—</div>
+          </div>
+          <div class="mock-cal-row">
+            <div class="semaine">S6<br>26/10</div>
+            <div class="mock-cb pres-cell"><input type="checkbox"><div>26/10<div class="mock-badge-pres">📍 Présentiel · 7h</div></div></div>
+            <div class="mock-cb pres-cell"><input type="checkbox"><div>27/10<div class="mock-badge-pres">📍 Présentiel · 7h</div></div></div>
+            <div class="mock-cb pres-cell"><input type="checkbox"><div>28/10<div class="mock-badge-pres">📍 Présentiel · 7h</div></div></div>
+            <div>—</div>
+          </div>
+          <div class="mock-cal-row">
+            <div class="semaine">S7<br>02/11</div>
+            <div class="mock-cb couvert-cell"><input type="checkbox" disabled><div>02/11<div class="mock-badge-couvert">✓ Déjà couvert</div></div></div>
+            <div class="mock-cb"><input type="checkbox"><div>03/11</div></div>
+            <div class="mock-cb"><input type="checkbox"><div>04/11</div></div>
+            <div>—</div>
+          </div>
+        </div>
+        <div class="annot">📌 <div><strong>Cases dorées</strong> = dernier lundi/mardi/mercredi du mois = <strong>présentiel à Marseille toute la journée (7h)</strong>. Cochez uniquement si vous pouvez vous déplacer !</div></div>
+        <div class="annot" style="margin-top:6px;">ℹ️ <div><strong>Cases grisées "Déjà couvert"</strong> = un autre formateur est déjà positionné sur ce créneau. Vous pouvez quand même cocher si vous êtes aussi disponible — Stéphanie arbitrera.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">4</div>
+      <div class="step-title">Cocher ses disponibilités et valider</div>
+    </div>
+    <div class="step-body">
+      <p>Cochez toutes les cases où vous êtes disponibles. N'oubliez pas les présentiels du dernier jour du mois si vous pouvez venir à Marseille.</p>
+      <p>Une fois terminé, cliquez sur <strong>"Valider mes disponibilités"</strong> en bas de page.</p>
+      <div class="mock" style="text-align:center;">
+        <button class="mock-btn" style="background:var(--blue);font-size:14px;padding:12px 24px;">✅ Valider mes disponibilités</button>
+      </div>
+      <div class="warn">⚠️ <strong>Une fois validé, vous ne pouvez plus modifier directement.</strong> Si vous avez besoin de changer quelque chose, utilisez le bouton "Envoyer une demande de modification" qui apparaît après validation — ça enverra un message automatique à Stéphanie.</div>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">5</div>
+      <div class="step-title">C'est tout ! 🎉</div>
+    </div>
+    <div class="step-body">
+      <p>Vos disponibilités sont enregistrées. Stéphanie reçoit une alerte automatique si des créneaux restent non couverts une fois que tout le monde a répondu.</p>
+      <p>Vous recevrez le planning finalisé sur Slack une fois l'arbitrage fait.</p>
+      <div class="tip">🙏 Merci de jouer le jeu sur les présentiels — c'est ce qui nous permet d'anticiper les déplacements à Marseille sereinement !</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Outil conçu par <span>Outi'eDéaux</span> — Votre Outil Digital Idéal Personnalisé · My Partner School 2026
+</footer>
+
+</body>
+</html>
