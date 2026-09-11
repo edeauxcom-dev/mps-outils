@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Action requise — Présentiels Marseille</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root{ --blue:#0E70B7; --blue-dark:#0A4F80; --gold:#C9A84C; --gold-light:#FFF6E2; --teal:#2A7F7F; --bg:#F7F9FB; --card:#fff; --line:#E1E6EA; --muted:#666; --ink:#1A1A1A; --ok:#2F9E62; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;}
+  header{background:linear-gradient(135deg,var(--blue-dark),var(--blue));padding:28px 24px;text-align:center;}
+  header h1{font-family:'Cormorant Garamond',serif;font-size:26px;color:#fff;margin:0 0 6px;}
+  header p{color:#CFE3F2;font-size:14px;margin:0;}
+  .wrap{max-width:660px;margin:0 auto;padding:28px 20px 60px;}
+
+  /* Message Slack */
+  .slack-card{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:32px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .slack-top{background:#4A154B;padding:10px 16px;display:flex;align-items:center;gap:8px;}
+  .slack-top .ch{color:#fff;font-weight:700;font-size:13px;}
+  .slack-body{padding:16px 20px;}
+  .slack-author{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .avatar{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--teal),var(--blue));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;flex-shrink:0;}
+  .aname{font-weight:700;font-size:13px;}
+  .atime{font-size:11px;color:var(--muted);}
+  .msg{font-size:14px;line-height:1.65;white-space:pre-line;}
+  .msg b{font-weight:700;}
+
+  /* Steps */
+  h2{font-family:'Cormorant Garamond',serif;font-size:21px;color:var(--blue-dark);margin:0 0 16px;}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;overflow:hidden;}
+  .sh{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--blue-dark);}
+  .snum{width:28px;height:28px;border-radius:50%;background:var(--gold);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .stitle{color:#fff;font-weight:700;font-size:14px;}
+  .sbody{padding:14px 18px;}
+  .sbody p{margin:0 0 10px;font-size:14px;}
+  .sbody p:last-child{margin:0;}
+  .tip{background:#EAF4F1;border-left:3px solid var(--teal);padding:10px 14px;font-size:13px;color:#1B5757;border-radius:0 6px 6px 0;margin-top:10px;}
+  .warn{background:var(--gold-light);border-left:3px solid var(--gold);padding:10px 14px;font-size:13px;color:#7A5E1E;border-radius:0 6px 6px 0;margin-top:10px;}
+
+  /* Mock calendrier */
+  .mock{background:#F7F9FB;border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:10px;font-size:12.5px;}
+  .mock-table{width:100%;border-collapse:collapse;}
+  .mock-table th{background:var(--blue-dark);color:#fff;padding:7px 8px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;}
+  .mock-table td{padding:8px;border-bottom:1px solid var(--line);font-size:12px;}
+  .mock-table tr:nth-child(even) td{background:#FAFBFC;}
+  .cb{display:flex;align-items:flex-start;gap:6px;}
+  .cb input{width:15px;height:15px;margin-top:1px;flex-shrink:0;}
+  .badge-pres{display:inline-block;background:var(--gold);color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:8px;margin-top:3px;display:block;}
+  .badge-ok{display:inline-block;background:#E2F0E8;color:#2F7A52;font-size:9px;font-weight:700;padding:2px 5px;border-radius:8px;margin-top:3px;display:block;}
+  .visio-cell{color:var(--muted);font-style:italic;font-size:11px;}
+  .pres-row td{background:#FFF9EC!important;}
+  .pres-row td:first-child{border-left:3px solid var(--gold);}
+  .annot{background:#FEF3C7;border:1px solid var(--gold);border-radius:6px;padding:8px 12px;font-size:12px;color:#92400E;margin-top:8px;display:flex;gap:6px;align-items:flex-start;}
+  .arrow{font-size:20px;text-align:center;margin:6px 0;}
+
+  footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);}
+  footer span{color:var(--teal);font-weight:700;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📍 Une petite action à faire</h1>
+  <p>Pour compléter votre planning — 2 minutes max !</p>
+</header>
+
+<div class="wrap">
+
+  <!-- MESSAGE SLACK -->
+  <h2>💬 Message à poster sur Slack</h2>
+  <div class="slack-card">
+    <div class="slack-top"><div class="ch"># 📅 planning-formateurs</div></div>
+    <div class="slack-body">
+      <div class="slack-author">
+        <div class="avatar">S</div>
+        <div><div class="aname">Stéphanie</div><div class="atime">Aujourd'hui</div></div>
+      </div>
+      <div class="msg">Hello 👋
+
+Merci à tous pour vos disponibilités, c'est top !
+
+Une petite chose qui manque encore : <b>les présentiels à Marseille du dernier lundi/mardi/mercredi de chaque mois à partir d'octobre.</b>
+
+Ce sont des journées de 7h en présentiel — donc différent de vos visios habituelles. L'outil a besoin que vous vous positionniez <b>explicitement</b> sur ces dates, même si vous aviez déjà validé vos dispos.
+
+➡️ <b>C'est rapide : 2 minutes top chrono.</b>
+Le guide est ici → https://edeauxcom-dev.github.io/mps-outils/tuto-presentiel.html
+
+En gros : retournez sur l'outil depuis le hub, regénérez votre calendrier, et cochez uniquement les <b>cases dorées 📍 Présentiel Marseille · 7h</b> sur les dates où vous pouvez venir.
+
+Merci 🙏</div>
+    </div>
+  </div>
+
+  <!-- GUIDE VISUEL -->
+  <h2>📋 Ce qu'ils doivent faire — en images</h2>
+
+  <div class="step">
+    <div class="sh"><div class="snum">1</div><div class="stitle">Retourner sur l'outil depuis le hub</div></div>
+    <div class="sbody">
+      <p>Depuis le hub → <b>Formateurs</b> → <b>"Disponibilités formateurs"</b>.</p>
+      <p>Choisissez votre nom, une date de début (la semaine prochaine), et <b>6 mois</b> de durée.</p>
+      <p>Cliquez <b>"Générer mon calendrier"</b>.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sh"><div class="snum">2</div><div class="stitle">Repérer les cases dorées — ce sont les présentiels</div></div>
+    <div class="sbody">
+      <p>Dans le calendrier, vous verrez deux types de lignes :</p>
+      <div class="mock">
+        <table class="mock-table">
+          <thead>
+            <tr><th>Semaine</th><th>Lundi NTC</th><th>Mardi CC/CV</th><th>Mercredi MEM</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>S5</b><br><span style="color:var(--muted);font-size:10px;">05/10</span></td>
+              <td><div class="cb"><input type="checkbox" checked><div>05/10<div class="badge-ok">+ Cochez si dispo</div></div></div></td>
+              <td><div class="cb"><input type="checkbox" checked><div>06/10<div class="badge-ok">+ Cochez si dispo</div></div></div></td>
+              <td><div class="cb"><input type="checkbox" checked><div>07/10<div class="badge-ok">+ Cochez si dispo</div></div></div></td>
+            </tr>
+            <tr class="pres-row">
+              <td><b>→ S6</b><br><span style="color:var(--gold);font-size:10px;font-weight:700;">⭐ Présentiel</span></td>
+              <td><div class="cb"><input type="checkbox"><div>26/10<div class="badge-pres">📍 Présentiel Marseille · 7h</div></div></div></td>
+              <td><div class="cb"><input type="checkbox"><div>27/10<div class="badge-pres">📍 Présentiel Marseille · 7h</div></div></div></td>
+              <td><div class="cb"><input type="checkbox"><div>28/10<div class="badge-pres">📍 Présentiel Marseille · 7h</div></div></div></td>
+            </tr>
+            <tr>
+              <td><b>S7</b><br><span style="color:var(--muted);font-size:10px;">02/11</span></td>
+              <td><div class="cb"><input type="checkbox"><div>02/11</div></div></td>
+              <td><div class="cb"><input type="checkbox"><div>03/11</div></div></td>
+              <td><div class="cb"><input type="checkbox"><div>04/11</div></div></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="annot">📌 <div><b>Les lignes sur fond doré</b> = dernier lundi/mardi/mercredi du mois = <b>présentiel à Marseille toute la journée (7h)</b>. Ce sont ces cases-là qu'il faut cocher !</div></div>
+      </div>
+      <div class="warn">⚠️ Les autres cases (fond blanc) correspondent à vos visios habituelles — <b>pas besoin de les recocher si vous les avez déjà validées</b>. Seulement les cases dorées sont nouvelles.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sh"><div class="snum">3</div><div class="stitle">Cocher uniquement les présentiels où vous êtes disponible</div></div>
+    <div class="sbody">
+      <p>Parcourez le calendrier et cochez <b>uniquement les cases dorées</b> sur les mois où vous pouvez venir à Marseille.</p>
+      <div class="mock">
+        <table class="mock-table">
+          <thead>
+            <tr><th>Semaine</th><th>Lundi NTC</th><th>Mardi CC/CV</th><th>Mercredi MEM</th></tr>
+          </thead>
+          <tbody>
+            <tr class="pres-row">
+              <td><b>26/10</b><br><span style="color:var(--gold);font-size:10px;font-weight:700;">Présentiel oct.</span></td>
+              <td><div class="cb"><input type="checkbox" checked><div>26/10<div class="badge-pres">📍 Présentiel · 7h</div></div></div></td>
+              <td><div class="cb"><input type="checkbox"><div>27/10<div class="badge-pres">📍 Présentiel · 7h</div></div></div></td>
+              <td><div class="cb"><input type="checkbox" checked><div>28/10<div class="badge-pres">📍 Présentiel · 7h</div></div></div></td>
+            </tr>
+            <tr class="pres-row">
+              <td><b>30/11</b><br><span style="color:var(--gold);font-size:10px;font-weight:700;">Présentiel nov.</span></td>
+              <td><div class="cb"><input type="checkbox" checked><div>30/11<div class="badge-pres">📍 Présentiel · 7h</div></div></div></td>
+              <td><div class="cb"><input type="checkbox" checked><div>01/12<div class="badge-pres">📍 Présentiel · 7h</div></div></div></td>
+              <td><div class="cb"><input type="checkbox"><div>02/12<div class="badge-pres">📍 Présentiel · 7h</div></div></div></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="annot">✅ <div>Exemple : ce formateur peut venir le lundi et mercredi d'octobre, et le lundi et mardi de novembre. Il coche ces 4 cases et laisse les autres décochées.</div></div>
+      </div>
+      <div class="tip">💡 Si vous ne pouvez <b>jamais</b> venir en présentiel à Marseille, ne cochez aucune case dorée et validez directement — c'est une information utile aussi !</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sh"><div class="snum">4</div><div class="stitle">Valider</div></div>
+    <div class="sbody">
+      <p>Cliquez sur <b>"Valider mes disponibilités"</b> en bas de page. C'est tout !</p>
+      <div class="tip">🙏 Merci — ces infos permettent à Stéphanie de planifier les présentiels sereinement et d'anticiper les déplacements à Marseille.</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Outil conçu par <span>Outi'eDéaux</span> · My Partner School 2026</footer>
+</body>
+</html>
