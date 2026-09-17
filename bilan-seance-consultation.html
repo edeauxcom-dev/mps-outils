@@ -225,8 +225,29 @@
       </select>
     </div>
     <div class="field">
-      <label>Formateur</label>
-      <input type="text" id="filterFormateur" placeholder="Rechercher un nom…"/>
+      <label>Formateur·trice</label>
+      <select id="filterFormateurSelect">
+        <option value="">Tous</option>
+        <option>Grégory Greco</option>
+        <option>Jérémy Moran</option>
+        <option>Sébastien Renier</option>
+        <option>Fares Atba</option>
+        <option>Sandra Biela</option>
+        <option>Stéphanie Déaux</option>
+        <option value="__autre__">Autre (rechercher un nom)</option>
+      </select>
+      <input type="text" id="filterFormateur" placeholder="Nom du formateur…" style="display:none; margin-top:6px;"/>
+    </div>
+    <div class="field">
+      <label>Date de séance</label>
+      <input type="date" id="filterDate"/>
+    </div>
+    <div class="field">
+      <label>Tri</label>
+      <select id="sortOrder">
+        <option value="desc">Plus récent d'abord</option>
+        <option value="asc">Plus ancien d'abord</option>
+      </select>
     </div>
     <button class="btn-refresh" onclick="chargerBilans()">🔄 Actualiser</button>
     <div class="count-badge" id="countBadge"></div>
@@ -260,6 +281,34 @@
     return d.innerHTML;
   }
 
+  // Le Sheet / Apps Script renvoie parfois la date sous forme d'objet Date
+  // sérialisé en JSON (ex: "2026-09-13T22:00:00.000Z") au lieu d'un simple
+  // "2026-09-14". Cette conversion se fait en UTC, ce qui décale la date
+  // d'un jour en arrière (fuseau Europe/Paris en avance sur UTC) et colle
+  // une heure sans intérêt. dateKeyISO() recalcule la vraie date calendaire
+  // côté Europe/Paris, dans les deux cas de figure (avec ou sans heure).
+  function dateKeyISO(raw) {
+    if (!raw) return '';
+    if (typeof raw === 'string' && raw.includes('T')) {
+      const d = new Date(raw);
+      if (!isNaN(d)) {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit'
+        }).formatToParts(d);
+        const get = t => parts.find(p => p.type === t).value;
+        return `${get('year')}-${get('month')}-${get('day')}`;
+      }
+    }
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
+    return m ? m[0] : String(raw);
+  }
+
+  function formatDateAffichee(dateKey) {
+    if (!dateKey) return '';
+    const [y, mo, d] = dateKey.split('-');
+    return `${d}/${mo}/${y}`;
+  }
+
   function fieldHtml(label, value, full, isAlert) {
     const cls = 'bilan-field' + (full ? ' full' : '') + (isAlert ? ' alert-field' : '');
     const content = value ? esc(value).replace(/\n/g, '<br>') : '<span class="empty">—</span>';
@@ -268,13 +317,25 @@
 
   function renderCards() {
     const titreFilter = document.getElementById('filterTitre').value;
-    const formateurFilter = document.getElementById('filterFormateur').value.trim().toLowerCase();
+    const formateurSelect = document.getElementById('filterFormateurSelect').value;
+    const formateurText = document.getElementById('filterFormateur').value.trim().toLowerCase();
+    const dateFilter = document.getElementById('filterDate').value; // "YYYY-MM-DD" ou ""
+    const sortOrder = document.getElementById('sortOrder').value;
 
     const filtered = allBilans.filter(b => {
       if (titreFilter && b['Titre / Promo'] !== titreFilter) return false;
-      if (formateurFilter && !(b['Formateur'] || '').toLowerCase().includes(formateurFilter)) return false;
+      if (formateurSelect === '__autre__') {
+        if (formateurText && !(b['Formateur'] || '').toLowerCase().includes(formateurText)) return false;
+      } else if (formateurSelect) {
+        if ((b['Formateur'] || '') !== formateurSelect) return false;
+      }
+      if (dateFilter && b._dateKey !== dateFilter) return false;
       return true;
     });
+
+    filtered.sort((a, b) => sortOrder === 'asc'
+      ? a._dateKey.localeCompare(b._dateKey)
+      : b._dateKey.localeCompare(a._dateKey));
 
     document.getElementById('countBadge').textContent = filtered.length + ' bilan(s)';
 
@@ -285,7 +346,7 @@
     }
 
     cardsEl.innerHTML = filtered.map(b => {
-      const dateAffichee = b['Date de la séance'] || '';
+      const dateAffichee = formatDateAffichee(b._dateKey);
       const amb = ambianceClass(b['Ambiance du groupe']);
       const ambLabel = b['Ambiance du groupe'] || 'Non renseignée';
       return `
@@ -327,7 +388,10 @@
       const res = await fetch(API_URL);
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Erreur inconnue');
-      allBilans = data.data || [];
+      allBilans = (data.data || []).map(b => ({
+        ...b,
+        _dateKey: dateKeyISO(b['Date de la séance'])
+      }));
       document.getElementById('state-msg').style.display = 'none';
       document.getElementById('cards').style.display = 'flex';
       renderCards();
@@ -336,8 +400,17 @@
     }
   }
 
+  function toggleFormateurTexte() {
+    const isAutre = document.getElementById('filterFormateurSelect').value === '__autre__';
+    document.getElementById('filterFormateur').style.display = isAutre ? 'block' : 'none';
+    if (!isAutre) document.getElementById('filterFormateur').value = '';
+  }
+
   document.getElementById('filterTitre').addEventListener('change', renderCards);
+  document.getElementById('filterFormateurSelect').addEventListener('change', () => { toggleFormateurTexte(); renderCards(); });
   document.getElementById('filterFormateur').addEventListener('input', renderCards);
+  document.getElementById('filterDate').addEventListener('change', renderCards);
+  document.getElementById('sortOrder').addEventListener('change', renderCards);
 
   chargerBilans();
 </script>
