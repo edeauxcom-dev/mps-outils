@@ -556,10 +556,11 @@ display: none;
 <label for="emailApprenant">E-mail de l'apprenant·e</label>
 <input type="email" id="emailApprenant" placeholder="prenom.nom@exemple.fr" autocomplete="off"/>
 </div>
-<button type="button" class="btn-secondary" id="sendBtn" onclick="ouvrirMail()" disabled>📧 Ouvrir le mail dans ma messagerie</button>
-<button type="button" class="btn-ghost" id="copyBtn" onclick="copierTexteMail()" disabled>📋 Copier le texte</button>
+<button type="button" class="btn-secondary" id="gmailBtn" onclick="ouvrirGmail()">📧 Ouvrir dans Gmail</button>
+<button type="button" class="btn-ghost" id="sendBtn" onclick="ouvrirMail()">✉️ Autre messagerie</button>
+<button type="button" class="btn-ghost" id="copyBtn" onclick="copierTexteMail()">📋 Copier le texte</button>
 </div>
-<div class="note-text" id="sendHint">Les boutons s'activent une fois la fiche enregistrée. Le mail s'ouvre dans <b>ta</b> messagerie, avec ton adresse : tu le relis et tu l'envoies toi-même. Les notes internes n'y figurent jamais.</div>
+<div class="note-text" id="sendHint">Un clic suffit : la fiche est enregistrée si ce n'est pas déjà fait, puis le mail s'ouvre dans <b>ta</b> boîte, avec ton adresse. Tu relis et tu envoies toi-même. Les notes internes n'y figurent jamais.</div>
 <div class="statut-box" id="statutBox"></div>
 </div>
 </div>
@@ -813,7 +814,7 @@ function formateurFinal() {
 }
 
 function envoyerBilan() {
-  if (typeSeance === 'Mentorat') return enregistrerMentorat();
+  if (typeSeance === 'Mentorat') { enregistrerMentorat(); return; }
 
   const payload = {
     typeSeance: 'Animation',
@@ -854,7 +855,7 @@ function envoyerBilan() {
   });
 }
 
-function enregistrerMentorat() {
+function enregistrerMentorat(apres) {
   const sel = $('apprenant');
   const payload = {
     typeSeance: 'Mentorat',
@@ -879,17 +880,18 @@ function enregistrerMentorat() {
   };
   if (!payload.dateSeance || !payload.formateur || !payload.dossierId) {
     showMsg('Merci de renseigner au minimum la date, le mentor et l\'apprenant·e.', false);
-    return;
+    return false;
   }
   const btn = $('submitBtn');
   btn.disabled = true;
   btn.textContent = 'Enregistrement…';
   showMsg('Enregistrement et rangement dans le dossier de l\'apprenant·e…', true);
-  postViaIframe(payload, () => suivreStatut(payload.ficheId, 'enregistrement'));
+  postViaIframe(payload, () => suivreStatut(payload.ficheId, 'enregistrement', apres));
+  return true;
 }
 
 // Lecture du résultat côté serveur (l'iframe ne permet pas de lire la réponse du POST)
-async function suivreStatut(ficheId, etape) {
+async function suivreStatut(ficheId, etape, apres) {
   const box = $('statutBox');
   for (let i = 0; i < 12; i++) {
     try {
@@ -902,9 +904,8 @@ async function suivreStatut(ficheId, etape) {
         box.innerHTML = `<div>📁 ${esc(s.statutDossier)}</div>` +
           (s.pdfUrl ? `<div style="margin-top:4px"><a href="${esc(s.pdfUrl)}" target="_blank" rel="noopener">Ouvrir le PDF</a></div>` : '');
         $('submitBtn').textContent = 'Fiche enregistrée';
-        $('sendBtn').disabled = false;
-        $('copyBtn').disabled = false;
         $('newBtn').classList.remove('hidden');
+        if (apres) apres(true);
         return;
       }
     } catch (err) { /* on réessaie */ }
@@ -912,6 +913,7 @@ async function suivreStatut(ficheId, etape) {
   }
   showMsg('Pas de confirmation du serveur — vérifie l\'onglet Mentorat du tableau avant de réessayer.', false);
   $('submitBtn').disabled = false; $('submitBtn').textContent = 'Enregistrer la fiche de mentorat';
+  if (apres) apres(false);
 }
 
 // ---------------------------------------------------------------- MAIL (depuis la messagerie du mentor)
@@ -954,21 +956,43 @@ function tracerCopie(email) {
   postViaIframe({ action: 'copiePreparee', ficheId: ficheEnregistree.ficheId, emailApprenant: email }, () => {});
 }
 
-function ouvrirMail() {
-  if (!ficheEnregistree) { showMsg('Enregistre d\'abord la fiche.', false); return; }
+// La fiche est enregistrée automatiquement si ce n'est pas déjà fait, puis on prépare le mail.
+function assurerEnregistrement(suite) {
+  if (ficheEnregistree) { suite(true); return true; }
+  return enregistrerMentorat(suite);
+}
+
+function ouvrirGmail() {
   const email = emailValide();
   if (!email) return;
-  const { sujet, corps } = texteMail();
-  const url = 'mailto:' + encodeURIComponent(email) + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
-  window.location.href = url;
-  tracerCopie(email);
-  showMsg(url.length > 1900
-    ? '📧 Mail ouvert dans ta messagerie. Texte long : s\'il apparaît coupé, utilise « Copier le texte » et colle-le dans le mail.'
-    : '📧 Mail ouvert dans ta messagerie : relis-le et envoie-le. Rien ne s\'ouvre ? Utilise « Copier le texte ».', true);
+  // Onglet ouvert tout de suite (sinon le navigateur bloque la fenêtre après l'enregistrement)
+  const w = window.open('', '_blank');
+  if (w) { try { w.document.write('<p style="font-family:Arial;padding:20px">Enregistrement de la fiche puis ouverture de Gmail…</p>'); } catch (e) {} }
+  const lance = assurerEnregistrement(ok => {
+    const { sujet, corps } = texteMail();
+    const url = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) +
+      '&su=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
+    if (w && !w.closed) w.location.href = url; else window.open(url, '_blank');
+    if (ok) tracerCopie(email);
+    showMsg(ok
+      ? '📧 Brouillon ouvert dans Gmail (nouvel onglet), depuis ton adresse : relis-le et clique sur Envoyer.'
+      : '⚠️ Brouillon ouvert dans Gmail, mais la fiche n\'a pas pu être confirmée comme enregistrée : vérifie l\'onglet Mentorat du tableau.', ok);
+  });
+  if (!lance && w) w.close();
+}
+
+function ouvrirMail() {
+  const email = emailValide();
+  if (!email) return;
+  assurerEnregistrement(ok => {
+    const { sujet, corps } = texteMail();
+    window.location.href = 'mailto:' + encodeURIComponent(email) + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
+    if (ok) tracerCopie(email);
+    showMsg('📧 Mail ouvert dans ta messagerie (Mail, Outlook…). Rien ne s\'ouvre ? Utilise « Ouvrir dans Gmail » ou « Copier le texte ».', true);
+  });
 }
 
 async function copierTexteMail() {
-  if (!ficheEnregistree) { showMsg('Enregistre d\'abord la fiche.', false); return; }
   const email = emailValide();
   if (!email) return;
   const { sujet, corps } = texteMail();
@@ -981,8 +1005,8 @@ async function copierTexteMail() {
     try { document.execCommand('copy'); } catch (e2) {}
     ta.remove();
   }
-  tracerCopie(email);
   showMsg('📋 Texte copié (destinataire, objet et message) : colle-le dans un nouveau mail depuis ta boîte.', true);
+  assurerEnregistrement(ok => { if (ok) tracerCopie(email); });
 }
 
 // ---------------------------------------------------------------- RÉINITIALISATION
@@ -1004,8 +1028,6 @@ function nouvelleFiche() {
   resetRappel();
   $('statutBox').className = 'statut-box';
   $('statutBox').innerHTML = '';
-  $('sendBtn').disabled = true;
-  $('copyBtn').disabled = true;
   $('newBtn').classList.add('hidden');
   $('submitBtn').disabled = false;
   $('submitBtn').textContent = 'Enregistrer la fiche de mentorat';
