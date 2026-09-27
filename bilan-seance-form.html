@@ -315,13 +315,9 @@ display: none;
 </select>
 </div>
 <div class="field mento-only hidden">
-<label for="modalite">Modalité du mentorat</label>
-<select id="modalite">
-<option value="">— Sélectionner —</option>
-<option>Visio</option>
-<option>Téléphone</option>
-<option>Présentiel</option>
-</select>
+<span class="label">Modalité du mentorat</span>
+<div style="padding:7px 10px; border:1.5px solid var(--border); border-radius:4px; background:var(--violet-light); color:var(--violet); font-weight:700;">🎥 Visio</div>
+<input type="hidden" id="modalite" value="Visio"/>
 </div>
 </div>
 
@@ -992,7 +988,7 @@ async function copierTexteMail() {
 // ---------------------------------------------------------------- RÉINITIALISATION
 function viderChamps() {
   document.querySelectorAll('textarea, input[type="text"], input[type="email"]').forEach(el => el.value = '');
-  ['format','avancement','evalType','formateur','modalite','avancementParcours'].forEach(id => $(id).selectedIndex = 0);
+  ['format','avancement','evalType','formateur','avancementParcours'].forEach(id => $(id).selectedIndex = 0);
   $('dateProchain').value = '';
   toggleAutreFormateur();
   setAmbiance('');
