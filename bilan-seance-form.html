@@ -553,7 +553,7 @@ display: none;
 <div class="section-body">
 <div style="background:var(--violet-light); border:1px solid #d9ccef; border-radius:6px; padding:10px 14px; margin-bottom:12px; font-size:12.5px; line-height:1.6;">
 <b style="color:var(--violet);">📬 Envoyer le compte-rendu en 3 gestes</b><br>
-<b>1.</b> Vérifie l'e-mail de l'apprenant·e ci-dessous, puis clique sur <b>« 📧 Ouvrir dans Gmail »</b> (la fiche s'enregistre toute seule).<br>
+<b>1.</b> Vérifie l'e-mail de l'apprenant·e ci-dessous, puis clique sur <b>« 📧 Ouvrir dans Gmail »</b>. Gmail s'ouvre tout de suite ; la fiche s'enregistre en parallèle (laisse cette page ouverte jusqu'au ✅).<br>
 <b>2.</b> Dans l'onglet Gmail qui s'ouvre (destinataire et objet déjà remplis), clique dans le corps du mail et colle : <b>Cmd+V</b> sur Mac, <b>Ctrl+V</b> sur PC.<br>
 <b>3.</b> Relis, vérifie que l'expéditeur est bien <b>ton</b> adresse, puis clique sur <b>Envoyer</b>.<br>
 <span style="color:var(--grey-mid);">Rien ne se colle ? Reviens ici, clique sur « 📋 Copier le mail », puis recolle dans Gmail.</span>
@@ -902,7 +902,7 @@ function enregistrerMentorat(apres) {
 // Lecture du résultat côté serveur (l'iframe ne permet pas de lire la réponse du POST)
 async function suivreStatut(ficheId, etape, apres) {
   const box = $('statutBox');
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 25; i++) {
     try {
       const s = await apiGet({ action: 'statut', ficheId });
       if (etape === 'enregistrement' && s.found && s.statutDossier && s.statutDossier !== 'En cours…') {
@@ -918,7 +918,7 @@ async function suivreStatut(ficheId, etape, apres) {
         return;
       }
     } catch (err) { /* on réessaie */ }
-    await new Promise(r => setTimeout(r, 2500));
+    await new Promise(r => setTimeout(r, 1200));
   }
   showMsg('Pas de confirmation du serveur — vérifie l\'onglet Mentorat du tableau avant de réessayer.', false);
   $('submitBtn').disabled = false; $('submitBtn').textContent = 'Enregistrer la fiche de mentorat';
@@ -966,9 +966,23 @@ function tracerCopie(email) {
 }
 
 // La fiche est enregistrée automatiquement si ce n'est pas déjà fait, puis on prépare le mail.
+let enregistrementEnCours = false;
+let attentesEnregistrement = [];
 function assurerEnregistrement(suite) {
   if (ficheEnregistree) { suite(true); return true; }
-  return enregistrerMentorat(suite);
+  if (enregistrementEnCours) { attentesEnregistrement.push(suite); return true; }
+  const lance = enregistrerMentorat(ok => {
+    enregistrementEnCours = false;
+    const attentes = attentesEnregistrement; attentesEnregistrement = [];
+    suite(ok); attentes.forEach(f => f(ok));
+  });
+  if (lance) enregistrementEnCours = true;
+  return lance;
+}
+
+function bandeauEnregistrement() {
+  if (ficheEnregistree) return;
+  showMsgHtml('⏳ <b>Enregistrement de la fiche en cours (jusqu\'à 1 minute) : ne ferme pas cette page.</b> Tu peux déjà coller et envoyer ton mail dans Gmail.', true);
 }
 
 // ---------------------------------------------------------------- MAIL HTML (template compte-rendu apprenant·e)
@@ -1091,39 +1105,47 @@ function apercuMail() {
 function ouvrirGmail() {
   const email = emailValide();
   if (!email) return;
-  // Onglet ouvert tout de suite (sinon le navigateur bloque la fenêtre après l'enregistrement)
-  const w = window.open('', '_blank');
-  if (w) { try { w.document.write('<p style="font-family:Arial;padding:20px">Enregistrement de la fiche puis ouverture de Gmail…</p>'); } catch (e) {} }
+  const sel = $('apprenant');
+  if (!sel.value || !formateurFinal()) { showMsg('Merci de renseigner au minimum le mentor et l\'apprenant·e.', false); return; }
+  const { sujet, corps } = texteMail();
   const copie = copierRiche(); // dans le clic, sinon le navigateur refuse l'accès au presse-papiers
-  const lance = assurerEnregistrement(async ok => {
-    const riche = await copie;
-    const { sujet, corps } = texteMail();
-    let url = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(sujet);
-    if (!riche) url += '&body=' + encodeURIComponent(corps);
-    if (w && !w.closed) w.location.href = url; else window.open(url, '_blank');
-    if (ok) tracerCopie(email);
-    const suite = riche
-      ? '📧 Gmail est ouvert (nouvel onglet) avec le destinataire et l\'objet. Clique dans le corps du mail et fais <b>Cmd+V</b> (Ctrl+V sur PC) : le compte-rendu mis en forme apparaît. Relis, puis Envoyer.'
-      : '📧 Gmail est ouvert avec le compte-rendu en version texte (la mise en forme n\'a pas pu être copiée sur ce navigateur). Relis, puis Envoyer.';
-    showMsgHtml(ok ? suite : '⚠️ La fiche n\'a pas pu être confirmée comme enregistrée : vérifie l\'onglet Mentorat du tableau. ' + suite, ok);
+  // Gmail s'ouvre tout de suite ; l'enregistrement de la fiche continue en arrière-plan.
+  const w = window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(sujet), '_blank');
+  copie.then(riche => {
+    if (!riche && w && !w.closed) {
+      w.location.href = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
+    }
+    window.__mailRiche = riche;
   });
-  if (!lance && w) w.close();
+  assurerEnregistrement(ok => {
+    if (ok) tracerCopie(email);
+    const riche = window.__mailRiche !== false;
+    const consigne = riche
+      ? '📧 Dans l\'onglet Gmail : clique dans le corps du mail, fais <b>Cmd+V</b> (Ctrl+V sur PC), relis, puis Envoyer.'
+      : '📧 Dans l\'onglet Gmail : le compte-rendu est en version texte (mise en forme non copiable sur ce navigateur). Relis, puis Envoyer.';
+    showMsgHtml(ok
+      ? '✅ <b>Fiche enregistrée et rangée dans le dossier.</b> ' + consigne
+      : '⚠️ La fiche n\'a pas pu être confirmée comme enregistrée : vérifie l\'onglet Mentorat du tableau avant de la ressaisir. ' + consigne, ok);
+  });
+  bandeauEnregistrement();
 }
 
 function ouvrirMail() {
   const email = emailValide();
   if (!email) return;
-  const copie = copierRiche();
-  assurerEnregistrement(async ok => {
-    const riche = await copie;
-    const { sujet, corps } = texteMail();
+  const sel = $('apprenant');
+  if (!sel.value || !formateurFinal()) { showMsg('Merci de renseigner au minimum le mentor et l\'apprenant·e.', false); return; }
+  const { sujet, corps } = texteMail();
+  copierRiche().then(riche => {
     window.location.href = 'mailto:' + encodeURIComponent(email) + '?subject=' + encodeURIComponent(sujet) +
       (riche ? '' : '&body=' + encodeURIComponent(corps));
-    if (ok) tracerCopie(email);
-    showMsgHtml(riche
-      ? '✉️ Ta messagerie s\'ouvre : colle le compte-rendu mis en forme avec <b>Cmd+V</b> dans le corps du mail. Rien ne s\'ouvre ? Utilise « Ouvrir dans Gmail ».'
-      : '✉️ Ta messagerie s\'ouvre avec le compte-rendu en texte. Rien ne s\'ouvre ? Utilise « Ouvrir dans Gmail ».', true);
   });
+  assurerEnregistrement(ok => {
+    if (ok) tracerCopie(email);
+    showMsgHtml((ok ? '✅ <b>Fiche enregistrée.</b> ' : '⚠️ Fiche non confirmée : vérifie l\'onglet Mentorat du tableau. ') +
+      '✉️ Dans ta messagerie, colle le compte-rendu avec <b>Cmd+V</b>. Rien ne s\'est ouvert ? Utilise « Ouvrir dans Gmail ».', ok);
+  });
+  bandeauEnregistrement();
 }
 
 async function copierTexteMail() {
@@ -1157,6 +1179,7 @@ function viderChamps() {
 function nouvelleFiche() {
   viderChamps();
   ficheEnregistree = null;
+  enregistrementEnCours = false; attentesEnregistrement = [];
   $('apprenant').selectedIndex = 0;
   resetRappel();
   $('apercuZone').classList.add('hidden'); $('apercuBtn').textContent = '👁️ Aperçu du mail';
