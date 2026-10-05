@@ -1004,8 +1004,16 @@ function mpsMsg(texte, type) {
 
 async function mpsGet(params) {
   const q = new URLSearchParams(Object.assign({ cle: mpsCle() }, params));
-  const r = await fetch(MPS_API + '?' + q.toString(), { method: 'GET', redirect: 'follow' });
-  const j = await r.json();
+  /* Google renvoie parfois une page d'erreur passagère : on retente jusqu'à 3 fois avant d'abandonner */
+  let j = null, derniere = null;
+  for (let essai = 0; essai < 3 && !j; essai++) {
+    if (essai) await new Promise(r => setTimeout(r, 1500 * essai));
+    try {
+      const r = await fetch(MPS_API + '?' + q.toString(), { method: 'GET', redirect: 'follow' });
+      j = JSON.parse(await r.text());
+    } catch (e) { derniere = e; }
+  }
+  if (!j) throw new Error('le script Google n\'a pas répondu correctement après 3 tentatives, réessaie dans un instant');
   if (j && j.erreur === 'cle') { const e = new Error('cle'); e.cle = true; throw e; }
   if (!j || !j.ok) throw new Error((j && j.erreur) || 'Réponse inattendue');
   return j;
