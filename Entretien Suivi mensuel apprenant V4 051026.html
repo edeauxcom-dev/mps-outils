@@ -1094,7 +1094,7 @@ async function mpsChoisirApprenant() {
       ['promotion','entreprise','tuteur'].forEach(k => { mpsEl(k).value = ''; });
     }
     mpsAfficherResume(h);
-    mpsMsg(h.total ? h.total + ' entretien(s) enregistré(s) pour cet apprenant.' :
+    mpsMsg(h.total ? (h.total > 1 ? h.total + ' entretiens enregistrés pour cet apprenant.' : '1 entretien enregistré pour cet apprenant.') :
       'Aucun entretien enregistré avec cet outil pour cet apprenant : c\'est le premier. Vérifie nom et prénom ci-dessous.', h.total ? 'ok' : '');
   } catch (e) {
     if (e.cle) { mpsPoserCle(''); mpsDemanderCle('Clé d\'accès refusée. Vérifie-la et recommence.'); }
@@ -1105,7 +1105,7 @@ async function mpsChoisirApprenant() {
 function mpsAfficherResume(h) {
   const z = mpsEl('mps-resume');
   if (!h.total) { z.innerHTML = ''; return; }
-  let html = '<h3>Résumé des ' + h.entretiens.length + ' dernier(s) entretien(s)</h3>';
+  let html = '<h3>' + (h.entretiens.length > 1 ? 'Résumé des ' + h.entretiens.length + ' derniers entretiens' : 'Résumé du dernier entretien') + '</h3>';
   h.entretiens.forEach(e => {
     html += '<div class="mps-card"><div class="tete">' + mpsDateFr(e.date) + ' · ' + mpsEsc(MPS_OBJETS[e.objet] || e.objet || 'Objet non précisé') +
       ' · ' + mpsEsc(MPS_STATUTS[e.statut] || 'Statut non renseigné') + '</div>';
