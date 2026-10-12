@@ -440,6 +440,13 @@
   .mps-suivi { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin-bottom: 6px; font-size: 13px; }
   .mps-suivi span.txt { flex: 1 1 260px; }
   .mps-suivi select { padding: 5px 8px; border: 1.5px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 12.5px; }
+  .mps-absent-toggle { display:inline-flex; align-items:center; gap:8px; margin-top:12px; padding:8px 14px; border:1.5px solid var(--border); border-radius:20px; cursor:pointer; font-size:13px; font-weight:600; background:var(--grey-light); }
+  .mps-absent-toggle input { accent-color:#c62828; width:15px; height:15px; }
+  .mps-absent-toggle.on { border-color:#c62828; color:#c62828; background:#fff5f5; }
+  .mps-absent-panel { display:none; margin-top:10px; padding:12px 14px; border:1.5px solid #c62828; border-radius:10px; background:#fff5f5; }
+  .mps-absent-panel.on { display:block; }
+  .mps-abs-row { display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 4px; }
+  .mps-abs-note { font-size:12px; color:var(--grey-mid); margin-top:8px; }
   @media print { .mps-bar, #mps-save, #mps-save-msg { display: none !important; } }
 </style>
 </head>
@@ -591,6 +598,23 @@
           <label class="check-option">
             <input type="radio" name="objet" value="alerte"/> Entretien complémentaire (alerte formateur)
           </label>
+        </div>
+        <label class="mps-absent-toggle" id="mps-absent-label">
+          <input type="checkbox" id="mps-absent" onchange="mpsBasculerAbsence()"/> 🚫 Apprenant absent au rendez-vous
+        </label>
+        <div class="mps-absent-panel" id="mps-absent-panel">
+          <div class="field">
+            <label>Motif de l'absence (si connu)</label>
+            <input type="text" id="abs-motif" placeholder="Ex : malade, oubli, contrainte entreprise… Laisser vide si inconnu"/>
+          </div>
+          <div class="theme-label" style="margin-top:10px">Relance effectuée auprès de l'apprenant</div>
+          <div class="mps-abs-row" id="abs-relances">
+            <label class="pill-check"><input type="checkbox" value="email"/> E-mail</label>
+            <label class="pill-check"><input type="checkbox" value="sms"/> SMS / message</label>
+            <label class="pill-check"><input type="checkbox" value="appel"/> Appel téléphonique</label>
+            <label class="pill-check"><input type="checkbox" value="messagerie"/> Message sur messagerie vocale</label>
+          </div>
+          <div class="mps-abs-note">En cas d'absence, seuls l'objet et ce cadre sont nécessaires pour enregistrer : les rubriques suivantes peuvent rester vides. Pense au « Prochain entretien prévu » si un nouveau rendez-vous est fixé.</div>
         </div>
       </div>
     </div>
@@ -979,7 +1003,12 @@ const MPS_FORMATIONS = {
 };
 /* Cases « tout va bien » : elles n'apparaissent pas comme alertes dans le résumé */
 const MPS_POSITIFS = ['aucun-tech','projets-ok','progression-ok','integration-ok','relation-tuteur-ok','aucun-perso','posture-ok','numerique-responsable'];
-const MPS_STATUTS = { stable: '✅ Stable', surveiller: '⚠️ À surveiller', problematique: '🔴 Problématique' };
+const MPS_STATUTS = { stable: '✅ Stable', surveiller: '⚠️ À surveiller', problematique: '🔴 Problématique', absent: '🚫 Absent au rendez-vous' };
+function mpsBasculerAbsence() {
+  const on = mpsEl('mps-absent').checked;
+  mpsEl('mps-absent-panel').classList.toggle('on', on);
+  mpsEl('mps-absent-label').classList.toggle('on', on);
+}
 const MPS_OBJETS = { onboarding: 'Premier entretien – Onboarding', mensuel: 'Suivi mensuel', alerte: 'Entretien complémentaire (alerte formateur)' };
 const MPS_PARTENAIRE = { non: 'Non nécessaire', reflexion: 'En cours de réflexion', realisee: 'Réalisée' };
 
@@ -1117,6 +1146,7 @@ function mpsAfficherResume(h) {
   h.entretiens.forEach(e => {
     html += '<div class="mps-card"><div class="tete">' + mpsDateFr(e.date) + ' · ' + mpsEsc(MPS_OBJETS[e.objet] || e.objet || 'Objet non précisé') +
       ' · ' + mpsEsc(MPS_STATUTS[e.statut] || 'Statut non renseigné') + '</div>';
+    if (e.absent) html += '<div style="color:#c62828"><b>Absent</b>' + (e.absMotif ? ' — motif : ' + mpsEsc(e.absMotif) : ' — motif non connu') + ((e.absRelances || []).length ? ' · Relance : ' + e.absRelances.map(mpsEsc).join(', ') : ' · Aucune relance notée') + '</div>';
     if (e.ecf || e.presence) html += '<div>' + [e.ecf ? 'ECF : ' + mpsEsc(e.ecf) : '', e.presence ? 'Présence visio : ' + mpsEsc(e.presence) : ''].filter(Boolean).join(' · ') + '</div>';
     html += '<div>' + ((e.alertes || []).length ? e.alertes.map(a => '<span class="mps-tag alerte">' + mpsEsc(a) + '</span>').join('') : '<span class="mps-tag">Aucune alerte cochée</span>') + '</div>';
     const act = (e.actions || []).filter(a => a && a.texte);
@@ -1180,6 +1210,9 @@ function mpsCollecter() {
     partenaires: partenaire === 'realisee' ? g[6].libelles : [], partenairePrecisions: partenaire === 'realisee' ? v('partenaire-precisions') : '',
     alertes: [].concat(g[0].alertes, g[1].alertes, g[2].alertes, g[3].alertes, g[4].alertes, g[5].alertes),
     statut, statutLibelle: MPS_STATUTS[statut] || '',
+    absent: mpsEl('mps-absent').checked,
+    absMotif: mpsEl('mps-absent').checked ? v('abs-motif') : '',
+    absRelances: mpsEl('mps-absent').checked ? Array.from(document.querySelectorAll('#abs-relances input:checked')).map(cb => cb.parentElement.textContent.replace(/\s+/g, ' ').trim()) : [],
     actions, suiviActions, commentaires: v('commentaires'),
     sigNom: v('sig-nom'), sigDate: v('sig-date'),
     signature: mpsSigne ? mpsEl('sigCanvas').toDataURL('image/png') : ''
@@ -1202,7 +1235,7 @@ async function mpsEnregistrer() {
   if (!d.dateEntretien) manque.push('renseigner la date de l\'entretien');
   if (!d.nom) manque.push('renseigner le nom');
   if (!d.objet) manque.push('cocher l\'objet de l\'entretien');
-  if (!d.statut) manque.push('choisir la situation globale');
+  if (!d.statut && !d.absent) manque.push('choisir la situation globale (ou cocher « absent »)');
   if (manque.length) { mpsSaveMsg('Avant d\'enregistrer, il reste à : ' + mpsEsc(manque.join(' ; ')) + '.', 'err'); return; }
 
   const btn = mpsEl('mps-save');
@@ -1238,6 +1271,7 @@ async function mpsEnregistrer() {
 }
 
 function mpsApresReset() {
+  mpsBasculerAbsence();
   mpsSigne = false;
   mpsDossierId = '';
   mpsEl('mps-resume').innerHTML = '';
