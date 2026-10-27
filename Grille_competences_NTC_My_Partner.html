@@ -604,21 +604,147 @@ if(RDV_TRI){
     iframeRdv.name = 'rdv-submit-frame'; iframeRdv.style.display = 'none';
     const formRdv = document.createElement('form');
     formRdv.method = 'POST'; formRdv.target = 'rdv-submit-frame'; formRdv.action = RDV_TRI.retour; formRdv.style.display = 'none';
-    ['rdv','t','payload'].forEach(function(n){ const i = document.createElement('input'); i.type = 'hidden'; i.name = n; formRdv.appendChild(i); });
+    ['rdv','t','payload','pdf'].forEach(function(n){ const i = document.createElement('input'); i.type = 'hidden'; i.name = n; formRdv.appendChild(i); });
     document.body.appendChild(iframeRdv); document.body.appendChild(formRdv);
+
+    function rdvPause(ms){ return new Promise(function(ok){ setTimeout(ok, ms); }); }
+    function rdvScript(doc, src){
+      return new Promise(function(ok, ko){
+        const s = doc.createElement('script'); s.src = src; s.onload = ok; s.onerror = ko; doc.head.appendChild(s);
+      });
+    }
+
+    // PDF = la grille elle-même (paniers, couleurs, graphiques). Elle est rechargée en coulisse au format
+    // ordinateur (1100 px) avec les données saisies, pour un rendu identique sur téléphone, tablette ou PC.
+    // Tableau découpé en A4 paysage entre deux compétences ; 3 graphiques côte à côte sur la page de synthèse.
+    async function rdvFabriquerPdf(){
+      const payload = buildPayload();
+      const cadre = document.createElement('iframe');
+      cadre.setAttribute('aria-hidden', 'true');
+      cadre.style.cssText = 'position:fixed;left:-12000px;top:0;width:1100px;height:900px;border:0;';
+      cadre.src = location.pathname;
+      document.body.appendChild(cadre);
+      try{
+        await new Promise(function(ok, ko){ cadre.onload = ok; setTimeout(function(){ ko(new Error('délai dépassé')); }, 25000); });
+        const w = cadre.contentWindow, d = cadre.contentDocument;
+        await rdvScript(d, 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
+        await rdvScript(d, 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js');
+        if(w.Chart) w.Chart.defaults.animation = false;
+        w.applyPayload(payload);
+        await rdvPause(1300);
+
+        const css = d.createElement('style');
+        css.textContent = '.toolbar,.recherche-panel,.print-btn{display:none!important}.rdv-masque{display:none!important}body{background:#fff!important}';
+        d.head.appendChild(css);
+        const wrap = d.querySelector('.wrap');
+
+        // Graphiques des visites déjà réalisées (jusqu'à celle du RDV), redessinés en format paysage
+        const nbVisites = RDV_TRI.visite ? +RDV_TRI.visite : 3;
+        const graphes = [];
+        for(const id of ['b1', 'b2', 'b3'].slice(0, nbVisites)){
+          const c = d.getElementById(id);
+          if(!c) continue;
+          const instance = w.Chart && w.Chart.getChart ? w.Chart.getChart(c) : null;
+          if(instance){ instance.options.aspectRatio = 1.75; instance.options.animation = false; instance.resize(); }
+          await rdvPause(200);
+          const fond = d.createElement('canvas');
+          fond.width = c.width; fond.height = c.height;
+          const fctx = fond.getContext('2d');
+          fctx.fillStyle = '#ffffff'; fctx.fillRect(0, 0, fond.width, fond.height);
+          fctx.drawImage(c, 0, 0);
+          const h3 = c.parentNode.querySelector('h3');
+          graphes.push({ img: fond.toDataURL('image/jpeg', 0.9), ratio: c.height / c.width, titre: h3 ? h3.textContent : '' });
+        }
+        // Masqués dans la capture : le mode d'emploi, et la section des graphiques (reprise en page de synthèse)
+        const h2s = Array.from(wrap.querySelectorAll(':scope > h2'));
+        const aide = h2s.find(function(h){ return /comment utiliser/i.test(h.textContent); });
+        if(aide){ aide.classList.add('rdv-masque'); if(aide.nextElementSibling) aide.nextElementSibling.classList.add('rdv-masque'); }
+        const synthese = h2s.find(function(h){ return /synth/i.test(h.textContent); });
+        if(synthese){
+          let el = synthese;
+          while(el && !el.classList.contains('mentions') && el.tagName !== 'FOOTER'){ el.classList.add('rdv-masque'); el = el.nextElementSibling; }
+        }
+        await rdvPause(150);
+
+        // Points de coupe autorisés : avant un bloc (sauf juste après un titre) ou avant une compétence
+        const haut = wrap.getBoundingClientRect().top;
+        const coupes = [];
+        const enfants = Array.from(wrap.children).filter(function(el){ return el.offsetHeight > 0; });
+        enfants.forEach(function(el, i){
+          const prec = enfants[i - 1];
+          if(i > 0 && !(prec && /^H[1-3]$/.test(prec.tagName))) coupes.push(el.getBoundingClientRect().top - haut);
+        });
+        wrap.querySelectorAll('tbody tr.icon-row').forEach(function(tr, i){ if(i > 0) coupes.push(tr.getBoundingClientRect().top - haut); });
+
+        const W = wrap.offsetWidth, H = wrap.scrollHeight;
+        const echelle = Math.max(1, Math.min(2, Math.sqrt(14000000 / (W * H)))); // sous la limite des iPhone / iPad
+        const canvas = await w.html2canvas(wrap, { scale: echelle, useCORS: true, backgroundColor: '#ffffff', logging: false });
+
+        const pdf = new w.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+        const marge = 8, largeurMm = 297 - 2 * marge, hauteurMm = 210 - 2 * marge;
+        const pxParMm = canvas.width / largeurMm, rapport = canvas.width / W, hautPage = hauteurMm * pxParMm;
+        const coupesPx = coupes.map(function(c){ return Math.round(c * rapport); }).sort(function(a, b){ return a - b; });
+        let y = 0, premiere = true;
+        while(y < canvas.height - 4){
+          let fin = Math.min(canvas.height, Math.floor(y + hautPage));
+          if(fin < canvas.height){
+            const possibles = coupesPx.filter(function(c){ return c > y + hautPage * 0.35 && c <= fin; });
+            if(possibles.length) fin = possibles[possibles.length - 1];
+          }
+          const morceau = d.createElement('canvas');
+          morceau.width = canvas.width; morceau.height = fin - y;
+          const ctx = morceau.getContext('2d');
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, morceau.width, morceau.height);
+          ctx.drawImage(canvas, 0, y, canvas.width, fin - y, 0, 0, canvas.width, fin - y);
+          if(!premiere) pdf.addPage();
+          pdf.addImage(morceau.toDataURL('image/jpeg', 0.85), 'JPEG', marge, marge, largeurMm, (fin - y) / pxParMm, undefined, 'FAST');
+          premiere = false; y = fin;
+        }
+
+        // Synthèse : un graphique par page, en grand
+        graphes.forEach(function(g){
+          pdf.addPage();
+          pdf.setFont('helvetica', 'bold'); pdf.setFontSize(14); pdf.setTextColor(17, 90, 145);
+          pdf.text('Synthèse visuelle de la progression — ' + g.titre, marge, marge + 6);
+          pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(90, 100, 110);
+          pdf.text("Pour chaque compétence : l'attendu en fin de parcours (barre grise) et les 3 regards. Plus une barre colorée s'approche du repère gris, plus le niveau visé est atteint.", marge, marge + 12);
+          const dispo = hauteurMm - 26;
+          let lg = largeurMm, ht = largeurMm * g.ratio;
+          if(ht > dispo){ ht = dispo; lg = ht / g.ratio; }
+          pdf.addImage(g.img, 'JPEG', marge + (largeurMm - lg) / 2, marge + 16, lg, ht);
+          const yLeg = marge + hauteurMm - 2;
+          [['Attendu fin de parcours', [221, 228, 233]], ['Apprenti', [47, 158, 110]], ['Tuteur', [26, 123, 196]], ['CFA', [201, 138, 31]]]
+            .reduce(function(x, l){
+              pdf.setFillColor(l[1][0], l[1][1], l[1][2]); pdf.rect(x, yLeg - 3, 3.5, 3.5, 'F');
+              pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(60, 70, 80);
+              pdf.text(l[0], x + 5, yLeg);
+              return x + 10 + pdf.getTextWidth(l[0]);
+            }, marge);
+        });
+        return pdf.output('datauristring').split(',')[1] || '';
+      } finally {
+        cadre.remove();
+      }
+    }
 
     const enregistrerOrigine = enregistrerSurServeur;
     enregistrerSurServeur = function(){
       const dejaEnCours = submissionInProgress;
       enregistrerOrigine();
       if(dejaEnCours || !submissionInProgress) return; // enregistrement refusé (nom manquant, etc.)
-      formRdv.elements.rdv.value = RDV_TRI.rdv;
-      formRdv.elements.t.value = RDV_TRI.t;
-      formRdv.elements.payload.value = JSON.stringify(buildPayload());
-      formRdv.submit();
-      setTimeout(function(){
-        setStatus("Enregistré sur le serveur ✅ et rangé dans le dossier de l'apprenant·e 📁 (statut visible dans le planning des RDV).", 'ok');
-      }, 1500);
+      const payload = JSON.stringify(buildPayload());
+      const envoyer = function(pdf){
+        formRdv.elements.rdv.value = RDV_TRI.rdv;
+        formRdv.elements.t.value = RDV_TRI.t;
+        formRdv.elements.payload.value = payload;
+        formRdv.elements.pdf.value = pdf || '';
+        formRdv.submit();
+        setTimeout(function(){
+          setStatus("Enregistré sur le serveur ✅ et rangé en PDF dans le dossier de l'apprenant·e 📁 (statut visible dans le planning des RDV).", 'ok');
+        }, 2500);
+      };
+      setTimeout(function(){ setStatus("Enregistré sur le serveur ✅ — création du PDF de la grille en cours, ne fermez pas la page…", ''); }, 950);
+      rdvFabriquerPdf().then(envoyer).catch(function(e){ console.warn('PDF grille non fabriqué :', e); envoyer(''); });
     };
   }
 }
