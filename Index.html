@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --indigo:#1a7bc4; --indigo-f:#115a91; --bleu:#115a91; --fond:#f3f5fb; --carte:#ffffff;
+    --zebre:#f6f8f9; --texte:#2b2f38; --doux:#6b7280; --bord:#e3e6ef;
+    --ok:#2e7d32; --ok-f:#e7f5e8; --warn:#b26a00; --warn-f:#fff3df; --ko:#c62828; --ko-f:#fde8e8;
+    --info-f:#e8f1fa; --gris-f:#eef0f3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fond);color:var(--texte);font:16px/1.45 'Atkinson Hyperlegible',Arial,sans-serif}
+  button,input,select,textarea{font:inherit}
+  header{background:var(--indigo);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header img{height:38px;background:#fff;border-radius:8px;padding:4px 8px}
+  header h1{font-size:1.25rem;margin:0;flex:1;min-width:180px}
+  header .sous{font-size:.85rem;opacity:.85;font-weight:400;display:block}
+  .btn{border:0;border-radius:10px;padding:10px 16px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+  .btn-blanc{background:#fff;color:var(--indigo)}
+  .btn-prim{background:var(--indigo);color:#fff}
+  .btn-prim:hover{background:var(--indigo-f)}
+  .btn-sec{background:var(--info-f);color:var(--indigo-f)}
+  .btn-ko{background:var(--ko-f);color:var(--ko)}
+  .btn-mini{padding:6px 10px;border-radius:8px;font-size:.85rem}
+  .btn:disabled{opacity:.5;cursor:wait}
+  main{max-width:1280px;margin:0 auto;padding:16px}
+  .barre{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .mois{display:flex;align-items:center;gap:6px;background:var(--carte);border-radius:12px;padding:4px;border:1px solid var(--bord)}
+  .mois button{background:none;border:0;font-size:1.3rem;padding:4px 12px;cursor:pointer;color:var(--indigo)}
+  .mois strong{min-width:160px;text-align:center;text-transform:capitalize}
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+  .kpi{background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:12px 14px}
+  .kpi b{font-size:1.7rem;display:block;line-height:1.1}
+  .kpi span{color:var(--doux);font-size:.88rem}
+  .kpi.ok b{color:var(--ok)} .kpi.warn b{color:var(--warn)} .kpi.ko b{color:var(--ko)} .kpi.info b{color:var(--indigo)}
+  .jauge{height:8px;background:var(--gris-f);border-radius:8px;margin-top:8px;overflow:hidden}
+  .jauge i{display:block;height:100%;background:var(--ok);border-radius:8px;transition:width .4s}
+  .carte{background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:14px;margin-bottom:14px}
+  .carte h2{font-size:1.05rem;margin:0 0 10px;color:var(--indigo-f)}
+  /* Calendrier du mois */
+  .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+  .cal .jn{font-size:.78rem;color:var(--doux);text-align:center;font-weight:700;padding:2px 0}
+  .cal .j{min-height:76px;border:1px solid var(--bord);border-radius:10px;padding:4px;background:#fff;font-size:.78rem;overflow:hidden}
+  .cal .j.hors{background:transparent;border-style:dashed;opacity:.4}
+  .cal .j.we{background:var(--zebre)}
+  .cal .j.auj{outline:2px solid var(--indigo)}
+  .cal .num{font-weight:700;color:var(--doux)}
+  .pill{display:block;border-radius:6px;padding:2px 5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;background:var(--info-f);color:var(--indigo-f)}
+  .pill.s-ok{background:var(--ok-f);color:var(--ok)} .pill.s-warn{background:var(--warn-f);color:var(--warn)} .pill.s-ko{background:var(--ko-f);color:var(--ko);text-decoration:line-through}
+  /* Tableau façon planning */
+  .tab-wrap{overflow-x:auto}
+  table.plan{width:100%;border-collapse:collapse;font-size:.92rem}
+  table.plan th{background:var(--indigo);color:#fff;text-align:left;padding:9px 10px;font-weight:700;white-space:nowrap}
+  table.plan th:first-child{border-radius:10px 0 0 0} table.plan th:last-child{border-radius:0 10px 0 0}
+  table.plan td{padding:8px 10px;border-bottom:1px solid var(--bord);vertical-align:top}
+  table.plan tr:nth-child(even) td{background:var(--zebre)}
+  table.plan tr.flash td{animation:flash 1.6s}
+  @keyframes flash{0%{background:#fff3b0}100%{}}
+  .badge{display:inline-block;border-radius:999px;padding:3px 10px;font-size:.8rem;font-weight:700;white-space:nowrap}
+  .b-planifie{background:var(--info-f);color:var(--indigo-f)} .b-ok{background:var(--ok-f);color:var(--ok)}
+  .b-warn{background:var(--warn-f);color:var(--warn)} .b-ko{background:var(--ko-f);color:var(--ko)}
+  .b-parc{background:var(--gris-f);color:var(--texte)}
+  a{color:var(--bleu)}
+  .actions{display:flex;gap:4px;flex-wrap:wrap}
+  .vide{color:var(--doux);font-style:italic;padding:8px 0}
+  /* Sans RDV */
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px dashed var(--indigo);color:var(--indigo-f);background:#fff;border-radius:999px;padding:5px 12px;cursor:pointer;font-size:.88rem}
+  .chip:hover{background:var(--info-f)}
+  .groupe{margin:6px 0 10px}
+  .groupe b{font-size:.85rem;color:var(--doux);display:block;margin-bottom:4px}
+  /* Panneau formulaire */
+  .voile{position:fixed;inset:0;background:rgba(20,24,40,.45);display:none;z-index:20}
+  .panneau{position:fixed;top:0;right:0;height:100%;width:min(560px,100%);background:#fff;z-index:21;transform:translateX(105%);transition:transform .25s;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.15)}
+  .ouvert .voile{display:block} .ouvert .panneau{transform:none}
+  .panneau header{border-radius:0}
+  .panneau .corps{padding:16px;overflow-y:auto;flex:1}
+  .panneau .pied{padding:12px 16px;border-top:1px solid var(--bord);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+  label{display:block;font-weight:700;font-size:.9rem;margin:12px 0 4px}
+  label small{font-weight:400;color:var(--doux)}
+  input[type=text],input[type=email],input[type=tel],input[type=date],input[type=time],select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--bord);border-radius:10px;background:#fff}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--indigo)}
+  .ligne2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .ligne3{display:grid;grid-template-columns:1.3fr 1fr .8fr;gap:10px}
+  .recherche{display:flex;gap:6px}
+  .sugg{border:1px solid var(--bord);border-radius:10px;margin-top:6px;max-height:240px;overflow-y:auto;display:none}
+  .sugg div{padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--bord);font-size:.9rem}
+  .sugg div:hover{background:var(--info-f)}
+  .sugg small{color:var(--doux);display:block}
+  .encart{background:var(--info-f);border-radius:10px;padding:8px 12px;font-size:.88rem;margin-top:8px}
+  .encart.warn{background:var(--warn-f);color:var(--warn)}
+  .case{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin-top:14px}
+  .case input{margin-top:4px}
+  /* Connexion */
+  .login{max-width:420px;margin:60px auto;background:#fff;border-radius:16px;padding:24px;border:1px solid var(--bord);text-align:center}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1f2433;color:#fff;padding:12px 18px;border-radius:12px;z-index:40;display:none;max-width:90%}
+  .charge{color:var(--doux);padding:30px;text-align:center}
+  @media (max-width:820px){
+    .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .cal .j{min-height:54px} .pill{font-size:.7rem}
+    table.plan thead{display:none}
+    table.plan tr{display:block;border:1px solid var(--bord);border-radius:12px;margin-bottom:10px;background:#fff;padding:6px}
+    table.plan td{display:flex;gap:8px;border:0;padding:4px 6px;background:transparent!important}
+    table.plan td::before{content:attr(data-l);font-weight:700;min-width:110px;color:var(--doux);font-size:.82rem}
+    .ligne3,.ligne2{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="ecranLogin" class="login" style="display:none">
+    <img src="<?= logoUrl ?>" alt="My Partner School" style="height:48px">
+    <h2>RDV tripartites</h2>
+    <p>Saisis la clé d'accès pour ouvrir le planning.</p>
+    <input type="text" id="cle" autocomplete="off" placeholder="Clé d'accès">
+    <p><button class="btn btn-prim" onclick="connexion()">Ouvrir</button></p>
+    <p id="loginErr" style="color:var(--ko)"></p>
+  </div>
+
+  <div id="ecranApp" style="display:none">
+    <header>
+      <img src="<?= logoUrl ?>" alt="My Partner School">
+      <h1>🤝 RDV tripartites<span class="sous">Apprenti · Maître d'apprentissage · CFA</span></h1>
+      <button class="btn btn-blanc" onclick="ouvrirForm()">➕ Nouveau RDV</button>
+    </header>
+    <main>
+      <div class="barre">
+        <div class="mois"><button onclick="changerMois(-1)" aria-label="Mois précédent">‹</button><strong id="moisLib"></strong><button onclick="changerMois(1)" aria-label="Mois suivant">›</button></div>
+        <button class="btn btn-sec btn-mini" onclick="actualiserApprenants()" id="btnActu">🔄 Actualiser la liste des apprenants</button>
+        <label class="case" style="margin:0"><input type="checkbox" id="voirAnnules" onchange="rendu()"> Afficher les annulés</label>
+      </div>
+      <div id="alerteUrl" class="encart warn" style="display:none;margin-bottom:12px">⚠️ L'adresse de la web app n'est pas encore renseignée (CONFIG.URL_WEBAPP) : les liens vers les fiches ne seront pas créés. Voir le guide, étape 6.</div>
+
+      <div class="kpis">
+        <div class="kpi info"><b id="kRdv">0</b><span>RDV ce mois</span></div>
+        <div class="kpi ok"><b id="kFiches">0</b><span>grilles enregistrées</span><div class="jauge"><i id="jFiches" style="width:0"></i></div></div>
+        <div class="kpi warn"><b id="kAfaire">0</b><span>grilles à compléter (RDV passés)</span></div>
+        <div class="kpi ko"><b id="kSans">0</b><span>apprenants sans RDV ce mois</span></div>
+      </div>
+
+      <div class="carte"><h2>📅 Vue du mois</h2><div class="cal" id="cal"></div></div>
+
+      <div class="carte">
+        <h2>📋 Planning détaillé</h2>
+        <div class="tab-wrap"><table class="plan">
+          <thead><tr><th>Date</th><th>Jour</th><th>Heure</th><th>Apprenant</th><th>Parcours</th><th>Visite</th><th>Entreprise</th><th>Adresse</th><th>Maître d'app.</th><th>Fiche tripartite</th><th>Statut</th><th></th></tr></thead>
+          <tbody id="corpsTab"></tbody>
+        </table></div>
+        <div id="tabVide" class="vide" style="display:none">Aucun RDV ce mois-ci pour l'instant.</div>
+      </div>
+
+      <div class="carte">
+        <h2>🎯 Apprenants sans RDV ce mois <small style="font-weight:400;color:var(--doux)">— clique sur un nom pour lui fixer un RDV</small></h2>
+        <div id="sansRdv"></div>
+      </div>
+    </main>
+  </div>
+
+  <div id="charge" class="charge">Chargement…</div>
+</div>
+
+<!-- Panneau de création / modification -->
+<div id="zoneForm">
+  <div class="voile" onclick="fermerForm()"></div>
+  <aside class="panneau" aria-label="Rendez-vous tripartite">
+    <header><h1 id="titreForm" style="font-size:1.1rem">➕ Nouveau RDV tripartite</h1><button class="btn btn-blanc btn-mini" onclick="fermerForm()">✕</button></header>
+    <div class="corps">
+      <input type="hidden" id="fId">
+      <label for="fApp">Apprenant</label>
+      <select id="fApp" onchange="choisirApprenant()"></select>
+      <div id="fParcours" class="encart" style="display:none"></div>
+
+      <label for="fEnt">Entreprise <small>— tape le nom (+ la ville si besoin), puis 🔍</small></label>
+      <div class="recherche">
+        <input type="text" id="fEnt" placeholder="Ex. nom de l'enseigne Marseille" onkeydown="if(event.key==='Enter'){event.preventDefault();chercherEntreprise()}">
+        <button class="btn btn-sec" onclick="chercherEntreprise()" id="btnEnt">🔍</button>
+      </div>
+      <div class="sugg" id="suggEnt"></div>
+
+      <label for="fAdr">Adresse du RDV <small>— remplie automatiquement, modifiable</small></label>
+      <input type="text" id="fAdr" placeholder="N°, rue, code postal, ville" oninput="planifierAdresse()">
+      <div class="sugg" id="suggAdr"></div>
+
+      <div class="ligne2">
+        <div><label for="fTut">Maître d'apprentissage</label><input type="text" id="fTut" placeholder="Prénom NOM"></div>
+        <div><label for="fFonc">Fonction</label><input type="text" id="fFonc" placeholder="Ex. responsable magasin"></div>
+      </div>
+      <div class="ligne2">
+        <div><label for="fMail">E-mail <small>(facultatif)</small></label><input type="email" id="fMail"></div>
+        <div><label for="fTel">Téléphone <small>(facultatif)</small></label><input type="tel" id="fTel"></div>
+      </div>
+
+      <div class="ligne3">
+        <div><label for="fDate">Date</label><input type="date" id="fDate" onchange="if(!$('fId').value)$('fVisite').value=visiteDefaut(this.value);verifierConflit()"></div>
+        <div><label for="fHeure">Heure</label><input type="time" id="fHeure" step="300" onchange="verifierConflit()"></div>
+        <div><label for="fDuree">Durée</label>
+          <select id="fDuree" onchange="verifierConflit()"><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>1 h</option><option value="90">1 h 30</option></select></div>
+      </div>
+      <div id="conflit" class="encart warn" style="display:none"></div>
+
+      <div class="ligne2">
+        <div><label for="fVisite">Visite n°</label>
+          <select id="fVisite"><option value="1">Visite 1 (positionnement)</option><option value="2">Visite 2</option><option value="3">Visite 3 (si pas d'évolution)</option></select></div>
+        <div><label for="fCfa">Suivi CFA</label><input type="text" id="fCfa"></div>
+      </div>
+
+      <label for="fNote">Note pour l'agenda <small>(facultatif : code d'accès, parking…)</small></label>
+      <textarea id="fNote" rows="2"></textarea>
+
+      <label class="case"><input type="checkbox" id="fInviter"> <span>Envoyer aussi une invitation agenda au maître d'apprentissage <small>(un e-mail part immédiatement vers son adresse)</small></span></label>
+      <p class="encart">📆 Le RDV est ajouté automatiquement dans l'agenda My Partner, avec l'adresse et le lien vers la grille de compétences du titre (hub), déjà pré-remplie.</p>
+    </div>
+    <div class="pied">
+      <button class="btn btn-ko" id="btnAnnulerRdv" style="display:none;margin-right:auto" onclick="annulerRdv()">⛔ Annuler ce RDV</button>
+      <button class="btn btn-sec" onclick="fermerForm()">Fermer</button>
+      <button class="btn btn-prim" id="btnSave" onclick="enregistrer()">💾 Enregistrer + agenda</button>
+    </div>
+  </aside>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var CLE_URL = <?!= JSON.stringify(cleUrl).replace(/</g, '\\u003c') ?>;
+var S = { cle: '', apprenants: [], rdvs: [], mois: null, auj: '' };
+var MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+var JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function toast(msg, ms){ var t=$('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(function(){ t.style.display='none'; }, ms||3500); }
+function lireSession(k){ try { return localStorage.getItem(k) || ''; } catch(e){ return ''; } }
+function ecrireSession(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+
+function appel(fn){
+  var args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function(ok, ko){
+    var r = google.script.run.withSuccessHandler(ok).withFailureHandler(function(e){
+      var m = (e && e.message) || String(e);
+      if (m.indexOf('CLE') !== -1) { ecrireSession('cleTri',''); montrerLogin('Clé invalide.'); }
+      ko(new Error(m));
+    });
+    r[fn].apply(r, args);
+  });
+}
+
+function montrerLogin(err){ $('charge').style.display='none'; $('ecranApp').style.display='none'; $('ecranLogin').style.display='block'; $('loginErr').textContent = err || ''; }
+function connexion(){ S.cle = $('cle').value.trim(); demarrer(); }
+
+function demarrer(){
+  $('charge').style.display='block';
+  appel('api_init', S.cle).then(function(res){
+    ecrireSession('cleTri', S.cle);
+    S.apprenants = res.apprenants; S.rdvs = res.rdvs; S.auj = res.aujourdHui; S.cfaDefaut = res.suiviCfaDefaut || '';
+    if (!S.mois) {
+      var p = S.auj.split('-'); S.mois = { a: +p[0], m: +p[1] - 1 };
+      // Par défaut : le mois des prochains RDV tripartites (novembre / avril) s'il est le mois suivant
+      if (+p[1] === 10 || +p[1] === 3) { S.mois.m += 1; }
+    }
+    $('alerteUrl').style.display = res.urlOk ? 'none' : 'block';
+    $('ecranLogin').style.display='none'; $('charge').style.display='none'; $('ecranApp').style.display='block';
+    remplirSelect(); rendu();
+  }).catch(function(e){ if (e.message.indexOf('CLE') === -1) { $('charge').textContent = '⚠️ ' + e.message; } });
+}
+
+function changerMois(d){ var m = S.mois.m + d, a = S.mois.a; if (m < 0) { m = 11; a--; } if (m > 11) { m = 0; a++; } S.mois = { a: a, m: m }; rendu(); }
+function cleMois(){ return S.mois.a + '-' + String(S.mois.m + 1).padStart(2, '0'); }
+function dateFr(iso){ var p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+function jourSemaine(iso){ var p = iso.split('-'); return JOURS[new Date(+p[0], +p[1]-1, +p[2]).getDay()]; }
+function heureFin(h, d){ var p = h.split(':'), t = +p[0]*60 + +p[1] + (+d||60); return String(Math.floor(t/60)).padStart(2,'0') + 'h' + String(t%60).padStart(2,'0'); }
+
+function statutAff(r){
+  if (r.statut === 'Fiche enregistrée') return { lib: '✅ Grille enregistrée', c: 'b-ok', p: 's-ok' };
+  if (r.statut === 'Annulé') return { lib: '⛔ Annulé', c: 'b-ko', p: 's-ko' };
+  if (r.date < S.auj) return { lib: '⏰ Grille à compléter', c: 'b-warn', p: 's-warn' };
+  if (r.statut === 'Reporté') return { lib: '🔁 Reporté', c: 'b-warn', p: '' };
+  return { lib: '🟦 Planifié', c: 'b-planifie', p: '' };
+}
+
+function rdvsDuMois(avecAnnules){
+  var k = cleMois();
+  return S.rdvs.filter(function(r){ return r.date.slice(0,7) === k && (avecAnnules || r.statut !== 'Annulé'); })
+    .sort(function(a,b){ return (a.date + a.heure).localeCompare(b.date + b.heure); });
+}
+
+function rendu(){
+  $('moisLib').textContent = MOIS[S.mois.m] + ' ' + S.mois.a;
+  var actifs = rdvsDuMois(false);
+  var liste = rdvsDuMois($('voirAnnules').checked);
+  var fiches = actifs.filter(function(r){ return r.statut === 'Fiche enregistrée'; }).length;
+  var afaire = actifs.filter(function(r){ return r.statut !== 'Fiche enregistrée' && r.date < S.auj; }).length;
+  var avecRdv = {}; actifs.forEach(function(r){ avecRdv[r.dossierId] = 1; });
+  var sans = S.apprenants.filter(function(a){ return !avecRdv[a.dossierId]; });
+  $('kRdv').textContent = actifs.length; $('kFiches').textContent = fiches; $('kAfaire').textContent = afaire; $('kSans').textContent = sans.length;
+  $('jFiches').style.width = (actifs.length ? Math.round(fiches / actifs.length * 100) : 0) + '%';
+  renduCal(liste); renduTab(liste); renduSans(sans);
+}
+
+function renduCal(liste){
+  var h = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(function(j){ return '<div class="jn">' + j + '</div>'; });
+  var premier = new Date(S.mois.a, S.mois.m, 1), decal = (premier.getDay() + 6) % 7;
+  var nbJ = new Date(S.mois.a, S.mois.m + 1, 0).getDate();
+  for (var i = 0; i < decal; i++) h.push('<div class="j hors"></div>');
+  for (var d = 1; d <= nbJ; d++) {
+    var iso = cleMois() + '-' + String(d).padStart(2, '0');
+    var dow = new Date(S.mois.a, S.mois.m, d).getDay();
+    var cls = 'j' + (dow === 0 || dow === 6 ? ' we' : '') + (iso === S.auj ? ' auj' : '');
+    var pills = liste.filter(function(r){ return r.date === iso; }).map(function(r){
+      return '<span class="pill ' + statutAff(r).p + '" title="' + esc(r.heure + ' · ' + r.apprenant + ' · ' + r.entreprise) + '" onclick="voirLigne(\'' + r.id + '\')">' + esc(r.heure.replace(':','h') + ' ' + r.apprenant.split(' ')[0]) + '</span>';
+    }).join('');
+    h.push('<div class="' + cls + '"><span class="num">' + d + '</span>' + pills + '</div>');
+  }
+  $('cal').innerHTML = h.join('');
+}
+
+function renduTab(liste){
+  $('tabVide').style.display = liste.length ? 'none' : 'block';
+  $('corpsTab').innerHTML = liste.map(function(r){
+    var st = statutAff(r);
+    var maps = r.adresse ? '<a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(r.adresse) + '" target="_blank" rel="noopener">📍 ' + esc(r.adresse) + '</a>' : '—';
+    var fiche = r.statut === 'Annulé' ? '—'
+      : (!r.lienFiche ? '<small>Pas de grille pour ce parcours</small>'
+      : '<a class="btn btn-prim btn-mini" href="' + esc(r.lienFiche) + '" target="_blank" rel="noopener">📝 Ouvrir la grille</a>') +
+      (r.pdfUrl ? ' <a class="btn btn-sec btn-mini" href="' + esc(r.pdfUrl) + '" target="_blank" rel="noopener">📄 PDF</a>' : '');
+    return '<tr id="l-' + r.id + '">' +
+      '<td data-l="Date">' + dateFr(r.date) + '</td>' +
+      '<td data-l="Jour">' + jourSemaine(r.date) + '</td>' +
+      '<td data-l="Heure">' + r.heure.replace(':','h') + '-' + heureFin(r.heure, r.duree) + '</td>' +
+      '<td data-l="Apprenant"><b>' + esc(r.apprenant) + '</b></td>' +
+      '<td data-l="Parcours"><span class="badge b-parc">' + esc(r.parcours) + '</span></td>' +
+      '<td data-l="Visite">V' + esc(r.visite) + '</td>' +
+      '<td data-l="Entreprise">' + esc(r.entreprise) + '</td>' +
+      '<td data-l="Adresse">' + maps + '</td>' +
+      '<td data-l="Maître d\'app.">' + esc(r.tuteur || '—') + (r.tuteurTel ? '<br><a href="tel:' + esc(r.tuteurTel) + '">📞 ' + esc(r.tuteurTel) + '</a>' : '') + '</td>' +
+      '<td data-l="Fiche">' + fiche + '</td>' +
+      '<td data-l="Statut"><span class="badge ' + st.c + '">' + st.lib + '</span></td>' +
+      '<td data-l=""><div class="actions">' + (r.statut === 'Annulé' ? '<button class="btn btn-sec btn-mini" onclick="ouvrirForm(\'' + r.id + '\')">↩️ Replanifier</button>'
+        : '<button class="btn btn-sec btn-mini" onclick="ouvrirForm(\'' + r.id + '\')">✏️ Modifier</button>') + '</div></td></tr>';
+  }).join('');
+}
+
+function renduSans(sans){
+  if (!S.apprenants.length) { $('sansRdv').innerHTML = '<p class="vide">Liste des apprenants vide : clique sur « 🔄 Actualiser la liste des apprenants ».</p>'; return; }
+  if (!sans.length) { $('sansRdv').innerHTML = '<p class="vide">🎉 Tous les apprenants ont un RDV ce mois-ci.</p>'; return; }
+  var g = {}; sans.forEach(function(a){ (g[a.parcours] = g[a.parcours] || []).push(a); });
+  $('sansRdv').innerHTML = Object.keys(g).sort().map(function(p){
+    return '<div class="groupe"><b>' + esc(p) + ' (' + g[p].length + ')</b><div class="chips">' + g[p].map(function(a){
+      return '<button class="chip" onclick="ouvrirForm(null,\'' + a.dossierId + '\')">+ ' + esc(a.nom) + '</button>';
+    }).join('') + '</div></div>';
+  }).join('');
+}
+
+function voirLigne(id){ var l = $('l-' + id); if (!l) return; l.scrollIntoView({ behavior: 'smooth', block: 'center' }); l.classList.remove('flash'); void l.offsetWidth; l.classList.add('flash'); }
+
+/* ── Formulaire ── */
+function remplirSelect(){
+  var g = {}; S.apprenants.forEach(function(a){ (g[a.parcours] = g[a.parcours] || []).push(a); });
+  $('fApp').innerHTML = '<option value="">— Choisir un apprenant —</option>' + Object.keys(g).sort().map(function(p){
+    return '<optgroup label="' + esc(p) + '">' + g[p].map(function(a){ return '<option value="' + a.dossierId + '">' + esc(a.nom) + '</option>'; }).join('') + '</optgroup>';
+  }).join('');
+}
+function apprenant(id){ for (var i = 0; i < S.apprenants.length; i++) if (S.apprenants[i].dossierId === id) return S.apprenants[i]; return null; }
+
+function ouvrirForm(id, dossierId){
+  ['fId','fEnt','fAdr','fTut','fFonc','fMail','fTel','fNote','fHeure'].forEach(function(k){ $(k).value = ''; });
+  $('fInviter').checked = false; $('fDuree').value = '60'; $('fApp').disabled = false;
+  $('suggEnt').style.display = 'none'; $('suggAdr').style.display = 'none'; $('conflit').style.display = 'none';
+  var r = id ? S.rdvs.filter(function(x){ return x.id === id; })[0] : null;
+  $('titreForm').textContent = r ? '✏️ Modifier le RDV' : '➕ Nouveau RDV tripartite';
+  $('btnAnnulerRdv').style.display = r && r.statut !== 'Annulé' ? 'inline-flex' : 'none';
+  if (r) {
+    $('fId').value = r.id; $('fApp').value = r.dossierId; $('fApp').disabled = true;
+    $('fEnt').value = r.entreprise; $('fAdr').value = r.adresse; $('fTut').value = r.tuteur; $('fFonc').value = r.tuteurFonction;
+    $('fMail').value = r.tuteurEmail; $('fTel').value = r.tuteurTel; $('fNote').value = r.note;
+    $('fDate').value = r.date; $('fHeure').value = r.heure; $('fDuree').value = String(r.duree);
+    $('fVisite').value = String(r.visite || 1); $('fCfa').value = r.suiviCfa || S.cfaDefaut;
+    afficherParcours();
+  } else {
+    var premierJ = cleMois() + '-01';
+    $('fDate').value = premierJ < S.auj ? S.auj : premierJ;
+    $('fVisite').value = visiteDefaut($('fDate').value); $('fCfa').value = S.cfaDefaut;
+    $('fApp').value = dossierId || ''; choisirApprenant();
+  }
+  document.body.classList.add('ouvert');
+}
+function fermerForm(){ document.body.classList.remove('ouvert'); }
+function visiteDefaut(iso){ return String(iso || '').slice(5, 7) === '04' ? '2' : '1'; }
+
+function afficherParcours(){
+  var a = apprenant($('fApp').value);
+  $('fParcours').style.display = a ? 'block' : 'none';
+  if (a) $('fParcours').innerHTML = a.grille
+    ? '🎓 Parcours <b>' + esc(a.parcours) + '</b> — la grille de compétences ' + esc(a.parcours.replace(' FOAD', '')) + ' du hub sera ouverte, déjà pré-remplie.'
+    : '🎓 Parcours <b>' + esc(a.parcours) + '</b> — ⚠️ pas de grille de compétences sur le hub pour ce parcours : le RDV sera créé sans lien de fiche.';
+}
+function choisirApprenant(){
+  var a = apprenant($('fApp').value);
+  afficherParcours();
+  if (!a) return;
+  // Entreprise et maître d'apprentissage mémorisés lors d'un précédent RDV
+  $('fEnt').value = a.entreprise || ''; $('fAdr').value = a.adresse || ''; $('fTut').value = a.tuteur || '';
+  $('fFonc').value = a.tuteurFonction || ''; $('fMail').value = a.tuteurEmail || ''; $('fTel').value = a.tuteurTel || '';
+  if (a.entreprise) toast('Entreprise mémorisée reprise : ' + a.entreprise);
+  verifierConflit();
+}
+
+function chercherEntreprise(){
+  var q = $('fEnt').value.trim();
+  if (q.length < 3) { toast('Tape au moins 3 lettres du nom de l\'entreprise.'); return; }
+  $('btnEnt').disabled = true; $('suggEnt').style.display = 'block'; $('suggEnt').innerHTML = '<div>Recherche…</div>';
+  appel('api_chercherEntreprise', S.cle, q, '').then(function(res){
+    $('btnEnt').disabled = false;
+    if (!res.length) { $('suggEnt').innerHTML = '<div>Aucun résultat : saisis l\'adresse à la main ci-dessous.</div>'; return; }
+    window._ent = res;
+    $('suggEnt').innerHTML = res.map(function(e, i){
+      return '<div onclick="choisirEntreprise(' + i + ')"><b>' + esc(e.enseigne || e.nom) + '</b>' + (e.enseigne ? ' <small style="display:inline">(' + esc(e.nom) + ')</small>' : '') + '<small>📍 ' + esc(e.adresse) + '</small></div>';
+    }).join('');
+  }).catch(function(e){ $('btnEnt').disabled = false; $('suggEnt').innerHTML = '<div>⚠️ ' + esc(e.message) + '</div>'; });
+}
+function choisirEntreprise(i){
+  var e = window._ent[i];
+  $('fEnt').value = e.enseigne ? e.enseigne + ' (' + e.nom + ')' : e.nom;
+  $('fAdr').value = e.adresse; $('suggEnt').style.display = 'none';
+}
+
+var _tAdr;
+function planifierAdresse(){
+  clearTimeout(_tAdr);
+  var q = $('fAdr').value.trim();
+  if (q.length < 6) { $('suggAdr').style.display = 'none'; return; }
+  _tAdr = setTimeout(function(){
+    appel('api_chercherAdresse', S.cle, q).then(function(res){
+      if (!res.length) { $('suggAdr').style.display = 'none'; return; }
+      $('suggAdr').style.display = 'block';
+      $('suggAdr').innerHTML = res.map(function(l){ return '<div onclick="choisirAdresse(this)">📍 ' + esc(l) + '</div>'; }).join('');
+    }).catch(function(){});
+  }, 450);
+}
+function choisirAdresse(el){ $('fAdr').value = el.textContent.replace('📍 ', ''); $('suggAdr').style.display = 'none'; }
+
+function minutes(h){ var p = h.split(':'); return +p[0]*60 + +p[1]; }
+function verifierConflit(){
+  var d = $('fDate').value, h = $('fHeure').value, du = +$('fDuree').value, id = $('fId').value;
+  var z = $('conflit'); z.style.display = 'none';
+  if (!d || !h) return;
+  var dow = new Date(d + 'T12:00:00').getDay();
+  var msgs = [];
+  if (dow === 0 || dow === 6) msgs.push('📅 Ce jour tombe un ' + JOURS[dow].toLowerCase() + '.');
+  var debut = minutes(h), fin = debut + du;
+  S.rdvs.forEach(function(r){
+    if (r.id === id || r.statut === 'Annulé' || r.date !== d) return;
+    var rd = minutes(r.heure), rf = rd + (+r.duree || 60);
+    if (debut < rf + 30 && rd < fin + 30) msgs.push('⏱️ ' + r.heure.replace(':','h') + ' : ' + r.apprenant + ' (' + r.entreprise + ') — moins de 30 min d\'écart, pense au trajet.');
+  });
+  if (msgs.length) { z.innerHTML = msgs.map(esc).join('<br>'); z.style.display = 'block'; }
+}
+
+function enregistrer(){
+  var a = apprenant($('fApp').value);
+  if (!a) { toast('Choisis un apprenant.'); return; }
+  if (!$('fEnt').value.trim()) { toast('Indique l\'entreprise.'); return; }
+  if (!$('fDate').value || !$('fHeure').value) { toast('Indique la date et l\'heure.'); return; }
+  if ($('fInviter').checked && !$('fMail').value.trim()) { toast('Ajoute l\'e-mail du maître d\'apprentissage pour l\'inviter.'); return; }
+  var d = { id: $('fId').value, dossierId: a.dossierId, apprenant: a.nom, parcours: a.parcours,
+    entreprise: $('fEnt').value, adresse: $('fAdr').value, tuteur: $('fTut').value, tuteurFonction: $('fFonc').value,
+    tuteurEmail: $('fMail').value, tuteurTel: $('fTel').value, note: $('fNote').value,
+    date: $('fDate').value, heure: $('fHeure').value, duree: $('fDuree').value, inviterTuteur: $('fInviter').checked,
+    visite: $('fVisite').value, suiviCfa: $('fCfa').value };
+  $('btnSave').disabled = true; $('btnSave').textContent = 'Enregistrement…';
+  appel('api_enregistrerRdv', S.cle, d).then(function(res){
+    $('btnSave').disabled = false; $('btnSave').textContent = '💾 Enregistrer + agenda';
+    fermerForm(); toast(res.modifie ? '✅ RDV modifié — agenda mis à jour.' : '✅ RDV créé et ajouté à l\'agenda.');
+    var p = d.date.split('-'); S.mois = { a: +p[0], m: +p[1] - 1 };
+    return appel('api_init', S.cle).then(function(r2){ S.apprenants = r2.apprenants; S.rdvs = r2.rdvs; rendu(); setTimeout(function(){ voirLigne(res.id); }, 100); });
+  }).catch(function(e){ $('btnSave').disabled = false; $('btnSave').textContent = '💾 Enregistrer + agenda'; toast('⚠️ ' + e.message, 6000); });
+}
+
+function annulerRdv(){
+  var id = $('fId').value; if (!id) return;
+  if (!confirm('Annuler ce RDV ? L\'événement sera supprimé de l\'agenda.')) return;
+  appel('api_annulerRdv', S.cle, id).then(function(){
+    fermerForm(); toast('RDV annulé et retiré de l\'agenda.');
+    return appel('api_init', S.cle).then(function(r2){ S.rdvs = r2.rdvs; rendu(); });
+  }).catch(function(e){ toast('⚠️ ' + e.message, 6000); });
+}
+
+function actualiserApprenants(){
+  $('btnActu').disabled = true;
+  appel('api_actualiserApprenants', S.cle).then(function(res){
+    $('btnActu').disabled = false; S.apprenants = res.apprenants; remplirSelect(); rendu();
+    toast('🔄 ' + res.nb + ' apprenants à jour depuis le Drive.');
+  }).catch(function(e){ $('btnActu').disabled = false; toast('⚠️ ' + e.message, 6000); });
+}
+
+S.cle = CLE_URL || lireSession('cleTri');
+if (S.cle) demarrer(); else montrerLogin('');
+</script>
+</body>
+</html>
