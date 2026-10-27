@@ -611,7 +611,7 @@ if(RDV_TRI){
 
     // PDF = la grille elle-même (paniers, couleurs, graphiques). Elle est rechargée en coulisse au format
     // ordinateur (1100 px) avec les données saisies, pour un rendu identique sur téléphone, tablette ou PC.
-    // Tableau découpé en A4 paysage entre deux compétences ; 3 graphiques côte à côte sur la page de synthèse.
+    // Tableau découpé en A4 portrait entre deux compétences ; graphiques de progression 2 par page.
     async function rdvFabriquerPdf(){
       const payload = buildPayload();
       const cadre = document.createElement('iframe');
@@ -675,8 +675,8 @@ if(RDV_TRI){
         const echelle = Math.max(1, Math.min(2, Math.sqrt(14000000 / (W * H)))); // sous la limite des iPhone / iPad
         const canvas = await w.html2canvas(wrap, { scale: echelle, useCORS: true, backgroundColor: '#ffffff', logging: false });
 
-        const pdf = new w.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
-        const marge = 8, largeurMm = 297 - 2 * marge, hauteurMm = 210 - 2 * marge;
+        const pdf = new w.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+        const marge = 8, largeurMm = 210 - 2 * marge, hauteurMm = 297 - 2 * marge;
         const pxParMm = canvas.width / largeurMm, rapport = canvas.width / W, hautPage = hauteurMm * pxParMm;
         const coupesPx = coupes.map(function(c){ return Math.round(c * rapport); }).sort(function(a, b){ return a - b; });
         let y = 0, premiere = true;
@@ -696,18 +696,8 @@ if(RDV_TRI){
           premiere = false; y = fin;
         }
 
-        // Synthèse : un graphique par page, en grand
-        graphes.forEach(function(g){
-          pdf.addPage();
-          pdf.setFont('helvetica', 'bold'); pdf.setFontSize(14); pdf.setTextColor(17, 90, 145);
-          pdf.text('Synthèse visuelle de la progression — ' + g.titre, marge, marge + 6);
-          pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(90, 100, 110);
-          pdf.text("Pour chaque compétence : l'attendu en fin de parcours (barre grise) et les 3 regards. Plus une barre colorée s'approche du repère gris, plus le niveau visé est atteint.", marge, marge + 12);
-          const dispo = hauteurMm - 26;
-          let lg = largeurMm, ht = largeurMm * g.ratio;
-          if(ht > dispo){ ht = dispo; lg = ht / g.ratio; }
-          pdf.addImage(g.img, 'JPEG', marge + (largeurMm - lg) / 2, marge + 16, lg, ht);
-          const yLeg = marge + hauteurMm - 2;
+        // Synthèse : graphiques de progression, 2 par page
+        const legende = function(yLeg){
           [['Attendu fin de parcours', [221, 228, 233]], ['Apprenti', [47, 158, 110]], ['Tuteur', [26, 123, 196]], ['CFA', [201, 138, 31]]]
             .reduce(function(x, l){
               pdf.setFillColor(l[1][0], l[1][1], l[1][2]); pdf.rect(x, yLeg - 3, 3.5, 3.5, 'F');
@@ -715,6 +705,23 @@ if(RDV_TRI){
               pdf.text(l[0], x + 5, yLeg);
               return x + 10 + pdf.getTextWidth(l[0]);
             }, marge);
+        };
+        let yG = 0;
+        graphes.forEach(function(g, i){
+          const ht = largeurMm * g.ratio;
+          if(i % 2 === 0){
+            pdf.addPage();
+            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(14); pdf.setTextColor(17, 90, 145);
+            pdf.text('Synthèse visuelle de la progression', marge, marge + 6);
+            pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.5); pdf.setTextColor(90, 100, 110);
+            pdf.text(pdf.splitTextToSize("Pour chaque compétence : l'attendu en fin de parcours (barre grise) et les 3 regards. Plus une barre colorée s'approche du repère gris, plus le niveau visé est atteint.", largeurMm), marge, marge + 12);
+            legende(marge + 23);
+            yG = marge + 30;
+          }
+          pdf.setFont('helvetica', 'bold'); pdf.setFontSize(11); pdf.setTextColor(17, 90, 145);
+          pdf.text(g.titre, marge, yG + 4);
+          pdf.addImage(g.img, 'JPEG', marge, yG + 7, largeurMm, ht);
+          yG += ht + 14;
         });
         return pdf.output('datauristring').split(',')[1] || '';
       } finally {
