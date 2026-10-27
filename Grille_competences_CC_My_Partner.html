@@ -552,6 +552,74 @@ function enregistrerSurServeur(){
     setStatus("Enregistré sur le serveur ✅ — les autres formateurs pourront charger cette version.", 'ok');
   }, 900);
 }
+
+// --- Ouverture depuis l'outil « RDV tripartites » (lien de l'agenda ou du planning) ---
+// Pré-remplit l'apprenti·e, charge sa grille existante, complète entreprise / tuteur / date et suivi CFA
+// de la visite du RDV (uniquement les champs vides). À l'enregistrement sur le serveur, la grille est
+// AUSSI envoyée à l'outil RDV, qui la range en PDF dans le dossier de l'apprenant.
+const RDV_TRI = (function(){
+  const p = new URLSearchParams(location.search);
+  if(!p.get('prenom') || !p.get('nom')) return null;
+  const retour = p.get('retour') || '';
+  const visite = ['1','2','3'].indexOf(p.get('visite')) !== -1 ? p.get('visite') : '';
+  return {
+    prenom: p.get('prenom'), nom: p.get('nom'), entreprise: p.get('entreprise') || '', tuteur: p.get('tuteur') || '',
+    visite: visite, date: p.get('date') || '', cfa: p.get('cfa') || '', rdv: p.get('rdv') || '', t: p.get('t') || '',
+    retour: /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(retour) ? retour : ''
+  };
+})();
+
+function rdvRemplirSiVide(id, valeur){
+  const el = document.querySelector('#identite-block .ligne[data-id="' + id + '"]');
+  if(el && valeur && !el.innerText.trim()) el.innerText = valeur;
+}
+
+if(RDV_TRI){
+  const bandeau = document.createElement('div');
+  bandeau.style.cssText = 'background:#e8f1fa;border-left:5px solid #1a7bc4;border-radius:10px;padding:10px 14px;margin:0 0 12px;font-size:13px;line-height:1.45;';
+  bandeau.textContent = '🤝 Grille ouverte depuis le RDV tripartite' + (RDV_TRI.visite ? ' — visite ' + RDV_TRI.visite : '') +
+    (RDV_TRI.date ? ' du ' + RDV_TRI.date : '') + '. Positionnez les compétences dans la colonne de cette visite, puis cliquez sur « ☁️ Enregistrer sur le serveur »' +
+    (RDV_TRI.retour ? ' : la grille sera aussi rangée en PDF dans le dossier de l\'apprenant·e.' : '.');
+  const panneau = document.getElementById('recherche-panel');
+  panneau.parentNode.insertBefore(bandeau, panneau);
+
+  document.getElementById('search-prenom').value = RDV_TRI.prenom;
+  document.getElementById('search-nom').value = RDV_TRI.nom;
+  (async function(){
+    await chargerFiche();
+    rdvRemplirSiVide('apprenti_prenom', RDV_TRI.prenom);
+    rdvRemplirSiVide('apprenti_nom', RDV_TRI.nom);
+    rdvRemplirSiVide('entreprise', RDV_TRI.entreprise);
+    rdvRemplirSiVide('tuteur', RDV_TRI.tuteur);
+    if(RDV_TRI.visite){
+      rdvRemplirSiVide('date' + RDV_TRI.visite, RDV_TRI.date);
+      rdvRemplirSiVide('cfa' + RDV_TRI.visite, RDV_TRI.cfa);
+    }
+  })();
+
+  if(RDV_TRI.retour && RDV_TRI.rdv && RDV_TRI.t){
+    const iframeRdv = document.createElement('iframe');
+    iframeRdv.name = 'rdv-submit-frame'; iframeRdv.style.display = 'none';
+    const formRdv = document.createElement('form');
+    formRdv.method = 'POST'; formRdv.target = 'rdv-submit-frame'; formRdv.action = RDV_TRI.retour; formRdv.style.display = 'none';
+    ['rdv','t','payload'].forEach(function(n){ const i = document.createElement('input'); i.type = 'hidden'; i.name = n; formRdv.appendChild(i); });
+    document.body.appendChild(iframeRdv); document.body.appendChild(formRdv);
+
+    const enregistrerOrigine = enregistrerSurServeur;
+    enregistrerSurServeur = function(){
+      const dejaEnCours = submissionInProgress;
+      enregistrerOrigine();
+      if(dejaEnCours || !submissionInProgress) return; // enregistrement refusé (nom manquant, etc.)
+      formRdv.elements.rdv.value = RDV_TRI.rdv;
+      formRdv.elements.t.value = RDV_TRI.t;
+      formRdv.elements.payload.value = JSON.stringify(buildPayload());
+      formRdv.submit();
+      setTimeout(function(){
+        setStatus("Enregistré sur le serveur ✅ et rangé dans le dossier de l'apprenant·e 📁 (statut visible dans le planning des RDV).", 'ok');
+      }, 1500);
+    };
+  }
+}
 </script>
 </body>
 </html>
