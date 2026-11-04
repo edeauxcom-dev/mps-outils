@@ -437,7 +437,7 @@ return `
 <div class="bilan-card">
 <div class="bilan-head">
 <span class="tag">${esc(b['Titre / Promo'] || '—')}</span>
-<span class="tag format">${esc(b['Format'] || '—')}</span>
+<span class="tag format">${esc(b['Format'] || '—')}</span>${b['Lien avec la Veille 360°'] ? '<span class="tag violet">🛰️ Veille</span>' : ''}
 <span class="date-formateur">${esc(dateAffichee)} — ${esc(b['Formateur'] || '—')}</span>
 <span class="spacer"></span>
 <span class="ambiance-pill ${amb}">${esc(ambLabel)}</span>
@@ -454,6 +454,7 @@ ${fieldHtml('Vigilance / actions pour la suite', b['Vigilance / actions pour la 
 ${fieldHtml("Évaluation formative — type", b['Évaluation formative - Type'])}
 ${fieldHtml("Évaluation formative — objectif", b['Évaluation formative - Objectif'], true)}
 ${fieldHtml("Évaluation formative — résultat des apprenants", b['Évaluation formative - Résultat apprenants'], true)}
+${b['Lien avec la Veille 360°'] ? fieldHtml('🛰️ Lien avec la Veille 360°', b['Lien avec la Veille 360°'] + (b['Veille — piste et adaptation'] ? ' — ' + b['Veille — piste et adaptation'] : ''), true) : ''}
 </div>
 </div>
 `;

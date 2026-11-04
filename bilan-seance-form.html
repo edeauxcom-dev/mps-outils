@@ -456,6 +456,25 @@ display: none;
 </div>
 </div>
 
+<div class="section">
+<div class="section-header"><span class="icon">🛰️</span> Lien avec la Veille 360° MPS</div>
+<div class="section-body">
+<div class="field" style="margin-bottom:10px">
+<label for="veilleLien">Cette séance a-t-elle un lien avec la Veille 360° ?</label>
+<select id="veilleLien">
+<option value="">— Non / pas de lien —</option>
+<option>Oui — activité ou contenu issu de la veille</option>
+<option>Oui — idée ou info de terrain à remonter pour la veille</option>
+</select>
+</div>
+<div class="field">
+<label for="veilleDetail">Laquelle et qu'avez-vous fait ?</label>
+<textarea id="veilleDetail" placeholder="Ex : N°0 – Novembre 2026, atelier « Le client a déjà demandé à l'IA » testé en séance 2, 45 min, très bonne participation…"></textarea>
+</div>
+<div class="note-text">Ce bilan sert de preuve que notre veille est exploitée (Qualiopi, indicateur 24). Il est repris chaque mois dans le registre de la veille : vous n'avez rien d'autre à remplir.</div>
+</div>
+</div>
+
 </div><!-- /blocAnimation -->
 
 <!-- ============ MODE MENTORAT ============ -->
@@ -842,7 +861,9 @@ function envoyerBilan() {
     vigilance: $('vigilance').value,
     evalType: $('evalType').value,
     evalObjectif: $('evalObjectif').value,
-    evalResultat: $('evalResultat').value
+    evalResultat: $('evalResultat').value,
+    veilleLien: $('veilleLien').value,
+    veilleDetail: $('veilleDetail').value
   };
   if (!payload.titre || !payload.formateur || !payload.dateSeance) {
     showMsg('Merci de renseigner au minimum la date, le titre/promo et le formateur.', false);
@@ -1167,7 +1188,7 @@ function showMsgHtml(html, ok) {
 // ---------------------------------------------------------------- RÉINITIALISATION
 function viderChamps() {
   document.querySelectorAll('textarea, input[type="text"], input[type="email"]').forEach(el => el.value = '');
-  ['format','avancement','evalType','formateur','avancementParcours'].forEach(id => $(id).selectedIndex = 0);
+  ['format','avancement','evalType','veilleLien','formateur','avancementParcours'].forEach(id => $(id).selectedIndex = 0);
   $('dateProchain').value = '';
   toggleAutreFormateur();
   setAmbiance('');
