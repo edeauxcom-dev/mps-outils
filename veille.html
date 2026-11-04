@@ -118,7 +118,10 @@ async function charger() {
     $('archives').innerHTML = '';
     return;
   }
-  const n = data.numeros || [];
+  const n = (data.numeros || []).map(x => Object.assign({}, x, {
+    // le Drive peut stocker les retours à la ligne sous forme de <br /> : on les transforme en titres séparés
+    titres: (x.titres || []).flatMap(t => String(t).split(/<br\s*\/?>|\n/i)).map(t => t.trim()).filter(Boolean)
+  }));
   if (!n.length) {
     $('viewer').classList.remove('skel');
     $('side').innerHTML = '<p class="empty">Aucun numéro publié pour l\'instant.</p>';
