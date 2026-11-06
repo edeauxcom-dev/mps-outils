@@ -437,7 +437,7 @@ return `
 <div class="bilan-card">
 <div class="bilan-head">
 <span class="tag">${esc(b['Titre / Promo'] || '—')}</span>
-<span class="tag format">${esc(b['Format'] || '—')}</span>${b['Lien avec la Veille 360°'] ? '<span class="tag violet">🛰️ Veille</span>' : ''}
+<span class="tag format">${esc(b['Format'] || '—')}</span>${String(b['Lien avec la Veille 360°'] || '').startsWith('Oui') ? '<span class="tag violet">🛰️ Veille</span>' : ''}
 <span class="date-formateur">${esc(dateAffichee)} — ${esc(b['Formateur'] || '—')}</span>
 <span class="spacer"></span>
 <span class="ambiance-pill ${amb}">${esc(ambLabel)}</span>

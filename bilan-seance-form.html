@@ -460,9 +460,10 @@ display: none;
 <div class="section-header"><span class="icon">🛰️</span> Lien avec la Veille 360° MPS</div>
 <div class="section-body">
 <div class="field" style="margin-bottom:10px">
-<label for="veilleLien">Cette séance a-t-elle un lien avec la Veille 360° ?</label>
+<label for="veilleLien">Cette séance a-t-elle un lien avec la Veille 360° ? <span style="color:#c0392b">*</span></label>
 <select id="veilleLien">
-<option value="">— Non / pas de lien —</option>
+<option value="">— Choisir une réponse —</option>
+<option>Non — pas de lien avec la veille</option>
 <option>Oui — activité ou contenu issu de la veille</option>
 <option>Oui — idée ou info de terrain à remonter pour la veille</option>
 </select>
@@ -867,6 +868,12 @@ function envoyerBilan() {
   };
   if (!payload.titre || !payload.formateur || !payload.dateSeance) {
     showMsg('Merci de renseigner au minimum la date, le titre/promo et le formateur.', false);
+    return;
+  }
+  if (!payload.veilleLien) {
+    showMsg('Merci de répondre à la rubrique 🛰️ « Lien avec la Veille 360° », en bas de la fiche (« Non » est une réponse possible).', false);
+    $('veilleLien').scrollIntoView({behavior:'smooth', block:'center'});
+    $('veilleLien').focus();
     return;
   }
   const btn = $('submitBtn');
