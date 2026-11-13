@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Occupation des salles · My Partner School</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  /* Plan : une frise des promos en haut, puis un mini-calendrier par mois ; chaque jour = 2 barres (Salle 1 / Salle 2) colorées par titre */
+  --bg:#f6f7f9; --card:#ffffff; --ink:#1d2433; --muted:#5d6577; --line:#dfe3ea; --empty:#eef1f5;
+  --ntc:#2f6fd6; --ntc-soft:#dbe7fb;
+  --cv:#e0702a;  --cv-soft:#fde5d4;
+  --mem:#1f9466; --mem-soft:#d5f0e4;
+  --onb:#7b5cd6; --onb-soft:#e7e0fb;
+  --jury:#3b4a66; --jury-soft:#dfe4ee;
+  --off:#c9ced8; --sat:#c2364a;
+  --font:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141821; --card:#1d2230; --ink:#e9ecf3; --muted:#a2aabb; --line:#2f3646; --empty:#262c3b;
+  --ntc:#6a9cf0; --ntc-soft:#22365a; --cv:#f2934f; --cv-soft:#4a3020; --mem:#4cc395; --mem-soft:#173f31;
+  --onb:#a48cf0; --onb-soft:#33295a; --jury:#b5c1d9; --jury-soft:#2c3446; --off:#3a4152; --sat:#f0707f; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#141821; --card:#1d2230; --ink:#e9ecf3; --muted:#a2aabb; --line:#2f3646; --empty:#262c3b;
+  --ntc:#6a9cf0; --ntc-soft:#22365a; --cv:#f2934f; --cv-soft:#4a3020; --mem:#4cc395; --mem-soft:#173f31;
+  --onb:#a48cf0; --onb-soft:#33295a; --jury:#b5c1d9; --jury-soft:#2c3446; --off:#3a4152; --sat:#f0707f; color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.4}
+.wrap{max-width:1240px;margin:0 auto;padding:24px 20px 60px}
+h1{font-size:1.7rem;margin:0;text-wrap:balance}
+.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 6px}
+.logo{height:46px;width:auto;background:#fff;border-radius:8px;padding:4px 8px}
+h2{font-size:1.25rem;margin:36px 0 12px;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 20px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:20px}
+.fact{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.fact b{display:block;font-size:1.15rem}
+.fact span{color:var(--muted);font-size:.9rem}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.lg{display:flex;align-items:center;gap:6px;font-size:.92rem}
+.sw{width:22px;height:14px;border-radius:4px;display:inline-block}
+.sw.ntc{background:var(--ntc)} .sw.cv{background:var(--cv)} .sw.mem{background:var(--mem)} .sw.onb{background:var(--onb)}
+.sw.jury{background:repeating-linear-gradient(45deg,var(--jury) 0 3px,var(--jury-soft) 3px 6px)}
+.sw.off{background:var(--off)} .sw.free{background:var(--empty);border:1px solid var(--line)}
+.sw.scen{background:var(--card);border:2px dashed var(--muted)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+button.chip{font:inherit;font-size:.92rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer}
+button.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button.chip:focus-visible,.day:focus-visible{outline:3px solid var(--onb);outline-offset:2px}
+/* frise */
+.gantt{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;overflow-x:auto}
+.g{display:grid;grid-template-columns:150px repeat(var(--n,26),minmax(30px,1fr));gap:2px;min-width:980px;align-items:center}
+.g .mh{font-size:.72rem;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+.g .mh.yr{font-weight:700;color:var(--ink)}
+.g .pl{font-size:.88rem;font-weight:700;padding-right:6px}
+.g .pl small{display:block;font-weight:400;color:var(--muted);font-size:.75rem}
+.g .c{height:26px;border-radius:4px;font-size:.68rem;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+.c.o{background:var(--onb)} .c.k{background:linear-gradient(90deg,var(--ntc) 0 33%,var(--cv) 33% 66%,var(--mem) 66%)}
+.c.a{background:var(--off);color:var(--ink)} .c.j{background:repeating-linear-gradient(45deg,var(--jury) 0 4px,var(--jury-soft) 4px 8px);color:var(--ink)}
+.c.jo{background:repeating-linear-gradient(45deg,var(--jury-soft) 0 4px,var(--card) 4px 8px);border:1px dashed var(--jury);color:var(--ink)}
+.c.none{background:transparent}
+.scen .c{opacity:.55} .scen .pl{color:var(--muted)}
+/* mois */
+.year{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.month{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.month header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.month h3{margin:0;font-size:1.05rem;text-transform:capitalize}
+.badge{font-size:.75rem;border-radius:999px;padding:2px 8px;background:var(--empty);color:var(--muted);white-space:nowrap}
+.badge.sat{background:var(--sat);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.dow{font-size:.72rem;color:var(--muted);text-align:center}
+.day{border-radius:6px;padding:3px;min-height:58px;background:transparent;border:1px solid transparent;display:flex;flex-direction:column;gap:2px;cursor:default;position:relative}
+.day.out{visibility:hidden}
+.day.has{cursor:pointer;border-color:var(--line)}
+.day.offd{background:repeating-linear-gradient(135deg,var(--empty) 0 5px,transparent 5px 10px)}
+.day .n{font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums;display:flex;justify-content:space-between}
+.day .n i{font-style:normal;color:var(--sat);font-weight:700}
+.room{height:17px;text-overflow:ellipsis;min-width:0;border-radius:4px;font-size:.66rem;font-weight:700;color:#fff;display:flex;align-items:center;padding:0 4px;white-space:nowrap;overflow:hidden;background:var(--empty);color:var(--muted)}
+.room.NTC{background:var(--ntc);color:#fff} .room.CV{background:var(--cv);color:#fff} .room.MEM{background:var(--mem);color:#fff} .room.ONB{background:var(--onb);color:#fff}
+.room.JURY{background:repeating-linear-gradient(45deg,var(--jury) 0 3px,var(--jury-soft) 3px 6px);color:transparent}
+.room.JURYo{background:repeating-linear-gradient(45deg,var(--jury-soft) 0 3px,transparent 3px 6px);border:1px dashed var(--jury)}
+.room.scen{outline:2px dashed var(--card);outline-offset:-3px;opacity:.75}
+.day.sat{border-color:var(--sat);border-width:2px}
+.day .f2{font-size:.6rem;font-weight:700;color:var(--onb)}
+.day.cv2:not(.has){border:2px dotted var(--onb);cursor:pointer}
+.sw.f2{background:var(--card);border:2px dotted var(--onb)}
+.f2c b{color:var(--onb)}
+.ftab{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;overflow-x:auto}
+.ftab table{border-collapse:collapse;width:100%;min-width:640px;font-size:.9rem}
+.ftab th,.ftab td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.ftab td.n{font-variant-numeric:tabular-nums;font-weight:700}
+.day.dim .room:not(.hl){opacity:.18}
+.mnote{font-size:.8rem;color:var(--muted);margin:8px 0 0}
+.panel{position:sticky;bottom:12px;margin-top:20px;background:var(--card);border:2px solid var(--ink);border-radius:14px;padding:14px 16px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.panel h4{margin:0 0 6px;font-size:1rem}
+.panel ul{margin:0;padding-left:18px}
+.panel .x{float:right;font:inherit;background:none;border:0;color:var(--muted);cursor:pointer;font-size:1.2rem}
+.hidden{display:none}
+@media print{
+  @page{size:A4 landscape;margin:9mm}
+  :root{--bg:#ffffff;--card:#ffffff;--ink:#1d2433;--muted:#5d6577;--line:#d5dae3;--empty:#eef1f5;
+    --ntc:#2f6fd6;--cv:#e0702a;--mem:#1f9466;--onb:#7b5cd6;--jury:#3b4a66;--jury-soft:#dfe4ee;--off:#c9ced8;--sat:#c2364a;color-scheme:light}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  html,body{font-size:11px;background:#fff}
+  .wrap{max-width:none;padding:0}
+  .controls,.panel{display:none!important}
+  .facts{grid-template-columns:repeat(5,1fr)}
+  .year{grid-template-columns:repeat(3,1fr);gap:8px}
+  .month,.fact,.legend,.gantt,.ftab{break-inside:avoid}
+  h2{break-after:avoid;margin:14px 0 8px}
+  .month{height:91mm;overflow:hidden;display:flex;flex-direction:column;padding:2mm 3mm;border-radius:8px}
+  .month header{margin-bottom:1mm}
+  .month h3{font-size:.95rem}
+  .badge{font-size:.62rem;padding:1px 6px}
+  .grid{flex:1;grid-auto-rows:1fr;grid-template-rows:auto;gap:1mm}
+  .dow{font-size:.6rem}
+  .day{min-height:0;padding:2px 3px;gap:2px;justify-content:flex-start}
+  .room{height:13px;font-size:.6rem;padding:0 3px}
+  .day .n{font-size:.66rem;line-height:1.1}
+  .day .f2{font-size:.55rem}
+  .mnote{font-size:.62rem;margin:1mm 0 0}
+  .year{gap:3mm 3mm}
+  h2.yh{margin:0 0 2mm;font-size:1.1rem}
+  .room.scen{outline:none!important;opacity:.6}
+  .gantt{padding:5mm 4mm}
+  .logo{height:11mm;padding:0}
+  .g{grid-template-columns:34mm repeat(var(--n,26),minmax(0,1fr));row-gap:3.5mm;column-gap:1mm}
+  .g .c{height:9.5mm;font-size:.62rem;border-radius:5px}
+  .g .mh{font-size:.68rem;padding-bottom:1mm}
+  .g .pl{font-size:.95rem}
+  .g .pl small{font-size:.7rem}
+  .fact{padding:3mm 4mm}
+  .facts{margin-bottom:4mm}
+  .legend{padding:3mm 4mm;margin-bottom:2mm}
+  .room.JURY,.room.JURYo{background:var(--jury)!important;color:#fff!important;border:0}
+  .sw.jury,.c.j,.c.jo{background:var(--jury)!important;color:#fff!important}
+  h2.yh,h2.fh{break-before:page}
+  .gantt,.ftab{overflow:visible}
+  .g{min-width:0}
+  .ftab table{min-width:0}
+  .printnote{display:block!important}
+}
+.noprint{}
+@media print{.noprint{display:none}}
+.printnote{display:none;color:var(--muted);font-size:.85rem;margin:0 0 10px}
+@media (max-width:420px){.wrap{padding:16px}.year{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+:root{--res:#8a6d3b}
+.room.RES{background:var(--res);color:#fff}
+.sw.res{background:var(--res)}
+.day.conf{outline:3px dashed var(--sat);outline-offset:1px}
+
+/* ---- Outil éditable ---- */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 16px}
+button.act{font:inherit;font-size:.92rem;border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:999px;padding:7px 16px;cursor:pointer}
+button.act.light{background:var(--card);color:var(--ink);border-color:var(--line)}
+button.act.warn{background:var(--sat);border-color:var(--sat);color:#fff}
+button.act:focus-visible{outline:3px solid var(--onb);outline-offset:2px}
+.status{font-size:.85rem;color:var(--muted)}
+.banner{border-radius:12px;padding:12px 14px;margin:0 0 16px;border:2px solid var(--sat);background:var(--card)}
+.banner h3{margin:0 0 6px;font-size:1rem;color:var(--sat)}
+.banner ul{margin:0;padding-left:18px}
+.banner.ok{border-color:var(--mem)}
+.banner.ok h3{color:var(--mem)}
+.banner.info{border-color:var(--line)}
+.banner.info h3{color:var(--muted)}
+.admin{background:var(--card);border:2px solid var(--onb);border-radius:14px;padding:16px;margin:0 0 20px}
+.admin h2{margin:0 0 10px}
+.admin h3{margin:18px 0 8px;font-size:1.05rem}
+.admin table{border-collapse:collapse;width:100%;font-size:.88rem}
+.admin th,.admin td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.admin .tw{overflow-x:auto}
+.admin label{display:block;font-size:.82rem;color:var(--muted);margin:0 0 3px}
+.admin input,.admin select,.admin textarea{font:inherit;font-size:.92rem;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+.admin .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:0 0 10px}
+.admin .form{border:1px dashed var(--line);border-radius:12px;padding:12px;margin:10px 0}
+.admin .help{font-size:.82rem;color:var(--muted);margin:4px 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip2{background:var(--empty);border-radius:999px;padding:3px 10px;font-size:.82rem}
+.chip2 button{border:0;background:none;cursor:pointer;color:var(--sat);font:inherit;padding:0 0 0 4px}
+.hidden{display:none!important}
+@media print{.toolbar,.admin,.banner.info{display:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><img class="logo" src="logo-mps.jpg" alt="My Partner School"><h1>Calendrier des 2 salles de MPS</h1></header>
+  <p class="printnote" id="printnote"></p>
+  <p class="sub" id="sousTitre">Chaque jour de présentiel montre la <b>Salle 1</b> (barre du haut) et la <b>Salle 2</b> (barre du bas). <span class="noprint">Cliquez sur un jour pour voir le détail.</span></p>
+
+  <div class="toolbar">
+    <button class="act" id="bPrint" type="button">🖨️ Exporter en PDF</button>
+    <button class="act light" id="bAdmin" type="button">✏️ Modifier les dates</button>
+    <button class="act light" id="bReload" type="button">🔄 Recharger</button>
+    <span class="status" id="status">Chargement…</span>
+  </div>
+
+  <div id="conflits"></div>
+
+  <section class="admin hidden" id="admin" aria-label="Modification des dates">
+    <h2>✏️ Modifier les dates</h2>
+    <div id="cleZone" class="hidden">
+      <p class="help">Clé d'accès demandée une seule fois sur ce navigateur.</p>
+      <div class="row"><div><label for="cle">Clé d'accès</label><input type="password" id="cle" autocomplete="off"></div>
+      <div style="align-self:end"><button class="act" type="button" id="bCle">Valider</button></div></div>
+    </div>
+    <div id="adminCorps" class="hidden">
+      <p class="help">Les règles calculent le calendrier tout seul. Ici, vous ajoutez seulement les <b>exceptions</b> (un jury, un présentiel déplacé, une journée annulée, une salle réservée) et les <b>promos</b>. Le calendrier se met à jour dès l'enregistrement, et les conflits s'affichent en rouge.</p>
+
+      <h3>Exceptions</h3>
+      <div class="tw"><table><thead><tr><th>Type</th><th>Quoi</th><th>Dates</th><th>Statut</th><th>Note</th><th></th></tr></thead><tbody id="tExc"></tbody></table></div>
+      <button class="act light" type="button" id="bNewExc" style="margin-top:10px">＋ Ajouter une exception</button>
+
+      <div class="form hidden" id="fExc">
+        <input type="hidden" id="eId">
+        <div class="row">
+          <div><label for="eType">Type</label><select id="eType">
+            <option value="jury">Jury</option>
+            <option value="deplacement">Présentiel déplacé</option>
+            <option value="annulation">Présentiel annulé</option>
+            <option value="reservation">Salle réservée (réunion, autre)</option>
+          </select></div>
+          <div class="f-jury f-dep f-ann"><label for="ePromo">Promo</label><select id="ePromo"></select></div>
+          <div class="f-jury"><label for="eTitres">Titres concernés</label><input id="eTitres" placeholder="ex. CC + NTC"></div>
+          <div class="f-dep f-ann"><label for="eTitre">Titre</label><select id="eTitre"><option>CV</option><option>MEM</option><option>NTC</option></select></div>
+          <div class="f-jury"><label for="eStatut">Statut</label><select id="eStatut"><option value="à définir">À définir (fenêtre)</option><option value="confirmé">Confirmé (jours précis)</option></select></div>
+        </div>
+        <div class="row f-jury-fen">
+          <div><label for="eDebut">Fenêtre : du</label><input type="date" id="eDebut"></div>
+          <div><label for="eFin">au</label><input type="date" id="eFin"></div>
+        </div>
+        <div class="f-jury-conf">
+          <div class="row"><div><label for="eJour">Jours de jury</label><input type="date" id="eJour"></div>
+          <div style="align-self:end"><button class="act light" type="button" id="bAddJour">＋ Ajouter ce jour</button></div></div>
+          <div class="chips" id="eJours"></div>
+        </div>
+        <div class="row f-dep f-ann">
+          <div><label for="eOrig">Date prévue</label><input type="date" id="eOrig"></div>
+          <div class="f-dep"><label for="eNouv">Nouvelle date</label><input type="date" id="eNouv"></div>
+        </div>
+        <div class="row f-res">
+          <div><label for="eDate">Date</label><input type="date" id="eDate"></div>
+          <div><label for="eSalles">Salles</label><select id="eSalles"><option value="1">1 salle</option><option value="2">2 salles</option></select></div>
+          <div><label for="eLib">Pour quoi ?</label><input id="eLib" placeholder="ex. réunion d'équipe"></div>
+        </div>
+        <div><label for="eNote">Note</label><input id="eNote" placeholder="facultatif"></div>
+        <div class="toolbar" style="margin-top:10px"><button class="act" type="button" id="bSaveExc">Enregistrer</button><button class="act light" type="button" id="bCancelExc">Annuler</button></div>
+      </div>
+
+      <h3>Promos</h3>
+      <p class="help">La date de rentrée est le 1er jour d'onboarding (un jeudi). Les 5 jeudis d'onboarding, les présentiels, le jury blanc et la fenêtre de jury en découlent.</p>
+      <div class="tw"><table><thead><tr><th>Promo</th><th>Rentrée</th><th>Statut</th><th>Titres</th><th></th></tr></thead><tbody id="tPro"></tbody></table></div>
+      <button class="act light" type="button" id="bNewPro" style="margin-top:10px">＋ Ajouter une promo</button>
+      <div class="form hidden" id="fPro">
+        <input type="hidden" id="pId">
+        <div class="row">
+          <div><label for="pLib">Nom affiché</label><input id="pLib" placeholder="ex. Avril 2029"></div>
+          <div><label for="pRentree">Rentrée (1er jeudi d'onboarding)</label><input type="date" id="pRentree"></div>
+          <div><label for="pStatut">Statut</label><select id="pStatut"><option value="confirmée">Confirmée</option><option value="scénario">Scénario</option></select></div>
+          <div><label for="pTitres">Titres</label><input id="pTitres" value="CV,MEM,NTC"></div>
+        </div>
+        <div class="toolbar"><button class="act" type="button" id="bSavePro">Enregistrer</button><button class="act light" type="button" id="bCancelPro">Annuler</button></div>
+      </div>
+      <p class="help" style="margin-top:14px"><button class="act light" type="button" id="bOublier">Changer de clé</button></p>
+    </div>
+  </section>
+
+  <div class="facts">
+    <div class="fact"><b id="fMax">—</b><span>salles au maximum un même jour (règles + exceptions).</span></div>
+    <div class="fact"><b id="fSat">—</b><span>jours où les 2 salles sont prises (bordure rouge) : rien d'autre possible ce jour-là.</span></div>
+    <div class="fact"><b>Onboarding le jeudi</b><span>Les 2 salles sont libres : travail en sous-groupes possible.</span></div>
+    <div class="fact"><b>Jurys : semaines 2 et 3</b><span>Jamais la 1re semaine, jamais le jeudi en avril et octobre (onboarding), jamais la dernière semaine (présentiels).</span></div>
+    <div class="fact f2c"><b id="fF2">—</b><span>mardis où il faut 2 formateurs CV (2 promos CV en cours le même jour, visio ou présentiel).</span></div>
+  </div>
+
+  <div class="legend" aria-label="Légende">
+    <span class="lg"><i class="sw ntc"></i>NTC (lundi)</span>
+    <span class="lg"><i class="sw cv"></i>CV (mardi) · ★ = Boss · JB = jury blanc · sinon mi-parcours</span>
+    <span class="lg"><i class="sw f2"></i>Mardi à 2 formateurs CV</span>
+    <span class="lg"><i class="sw mem"></i>MEM (mercredi)</span>
+    <span class="lg"><i class="sw onb"></i>Onboarding 3 titres (jeudi)</span>
+    <span class="lg"><i class="sw jury"></i>Jury (fenêtre ou jours confirmés)</span>
+    <span class="lg"><i class="sw res"></i>Salle réservée</span>
+    <span class="lg"><i class="sw free"></i>Salle libre</span>
+    <span class="lg"><i class="sw off"></i>Pas de cours</span>
+    <span class="lg"><i class="sw scen"></i>* Scénario (non fixé)</span>
+  </div>
+  <div class="controls" role="group" aria-label="Filtres">
+    <button class="chip" id="bScen" aria-pressed="true">Scénarios affichés</button>
+    <button class="chip tp" data-tp="all" aria-pressed="true">Tous les titres</button>
+    <button class="chip tp" data-tp="CV" aria-pressed="false">Seulement CV</button>
+    <button class="chip tp" data-tp="MEM" aria-pressed="false">Seulement MEM</button>
+    <button class="chip tp" data-tp="NTC" aria-pressed="false">Seulement NTC</button>
+  </div>
+
+  <h2>Qui est en cours ? La frise des promos</h2>
+  <div class="gantt"><div class="g" id="gantt"></div></div>
+  <p class="mnote">Une ligne = une rentrée commune CV + MEM + NTC (bande tricolore = mois de cours). Avril et octobre sont les « mois charnières » : jury de la promo qui sort, onboarding de la promo qui entre.</p>
+
+  <h2 class="fh">Quand faut-il 2 formateurs CV ?</h2>
+  <div class="ftab"><table>
+    <thead><tr><th>Période</th><th>Promos CV en même temps</th><th>Mardis</th><th>Dont en présentiel</th></tr></thead>
+    <tbody id="tF2"></tbody></table>
+    <p class="mnote">Les promos CV suivent le même parcours dans l'ordre : un formateur ne peut pas mener 2 promos le même mardi. En décembre, les visios TRE (même épisode) pourraient être réunies avec un seul formateur ; le présentiel reste à 2.</p>
+  </div>
+
+  <div id="months"></div>
+  <div class="panel hidden" id="panel" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+/* =========================================================
+   Occupation des salles · My Partner School
+   Les RÈGLES sont dans ce fichier. Les PROMOS et les EXCEPTIONS
+   sont dans la Google Sheet, lues via l'Apps Script ci-dessous.
+   ========================================================= */
+const API_URL = "https://script.google.com/macros/s/AKfycbw2ny1LLfWBGbeICpgRUAksF_yn94fdCGNgsVD4l4aSna8pvNeIhehROfXCho-YyiPPvw/exec";   // ← coller ici l'adresse /exec de l'Apps Script après déploiement
+const CLE_STOCK = "mps_salles_cle";
+
+/* Données de secours (utilisées si l'Apps Script n'est pas encore branché) */
+const DONNEES_DEFAUT = {
+  promos: [
+    {id:"sept26", libelle:"Sept. 2026",   titres:"CV,MEM,NTC", rentree:"2026-09-02", statut:"confirmée", plan_cv:"transition-2026"},
+    {id:"avr27",  libelle:"Avril 2027",   titres:"CV,MEM,NTC", rentree:"2027-04-01", statut:"confirmée", plan_cv:"standard"},
+    {id:"oct27",  libelle:"Octobre 2027", titres:"CV,MEM,NTC", rentree:"2027-09-30", statut:"confirmée", plan_cv:"standard"},
+    {id:"avr28",  libelle:"Avril 2028",   titres:"CV,MEM,NTC", rentree:"2028-03-30", statut:"scénario",  plan_cv:"standard"},
+    {id:"oct28",  libelle:"Octobre 2028", titres:"CV,MEM,NTC", rentree:"2028-09-28", statut:"scénario",  plan_cv:"standard"}
+  ],
+  exceptions: [
+    {id:"exc1", type:"jury", promo:"", titres:"CC + NTC", statut:"à définir", debut:"2027-03-01", fin:"2027-03-19", jours:"", note:"Reporté de février (décision du 12/11/2026)"}
+  ]
+};
+
+/* ---------- Dates (en UTC pour éviter les décalages d'heure) ---------- */
+const MOIS=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+const JOURS=["lun.","mar.","mer.","jeu.","ven."], JL=["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
+const U=(y,m,d)=>new Date(Date.UTC(y,m,d));
+const iso=dt=>dt.toISOString().slice(0,10);
+const P=s=>{const [y,m,d]=String(s).slice(0,10).split("-").map(Number);return U(y,m-1,d);};
+const add=(dt,n)=>new Date(dt.getTime()+n*864e5);
+const wd=dt=>(dt.getUTCDay()+6)%7;           /* 0 = lundi */
+const fr=s=>{const d=P(s);return String(d.getUTCDate()).padStart(2,"0")+"/"+String(d.getUTCMonth()+1).padStart(2,"0")+"/"+d.getUTCFullYear();};
+const frc=s=>fr(s).slice(0,5);
+const mk=(y,m)=>y*12+m;                       /* index de mois */
+function paques(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;return U(y,mo-1,da);}
+const FER={};
+function feries(y){if(FER[y])return FER[y];const e=paques(y),s=new Set([U(y,0,1),add(e,1),U(y,4,1),U(y,4,8),add(e,39),add(e,50),U(y,6,14),U(y,7,15),U(y,10,1),U(y,10,11),U(y,11,25)].map(iso));return FER[y]=s;}
+const estFerie=dt=>feries(dt.getUTCFullYear()).has(iso(dt));
+function coupure(y){let f=U(y,11,24);while(wd(f)!==4)f=add(f,-1);return f;}           /* 1er vendredi avant Noël */
+function reprise(y){let d=U(y+1,0,2);while(wd(d)!==0)d=add(d,1);return d;}            /* 1er lundi après le 1er janvier */
+function sansCours(dt){                       /* août ou fêtes */
+  if(dt.getUTCMonth()===7) return "Août : pas de cours avec formateur";
+  const y=dt.getUTCFullYear();
+  if(dt>coupure(y)) return "Fêtes : pas de cours";
+  if(dt<reprise(y-1)) return "Fêtes : pas de cours";
+  return null;
+}
+function dernierJour(y,m,w){                  /* dernier jour w du mois, hors fêtes */
+  let best=null; for(let d=U(y,m,1); d.getUTCMonth()===m; d=add(d,1)) if(wd(d)===w && !sansCours(d)) best=d; return best;
+}
+
+/* ---------- Règles ---------- */
+const TITRES={NTC:0,CV:1,MEM:2};              /* jour fixe : lundi, mardi, mercredi */
+const PLAN_TRANSITION={"2026-11":"ECF","2027-01":"Boss","2027-02":"Boss","2027-03":"Mi-parcours","2027-04":"Boss","2027-05":"Boss","2027-06":"Mi-parcours","2027-07":"Jury blanc"};
+function onboardingJours(p){                   /* 5 jeudis à partir de la rentrée */
+  const out=[]; let d=P(p.rentree); while(wd(d)!==3) d=add(d,1);
+  while(out.length<5){ if(!estFerie(d)) out.push(iso(d)); d=add(d,7); }
+  return out;
+}
+function infosPromo(p){
+  const onb=onboardingJours(p), t3=P(onb[2]);
+  const mOnb=mk(t3.getUTCFullYear(), t3.getUTCMonth());
+  const cours=[]; for(let i=1;i<=11;i++){const k=mOnb+i; if(k%12!==7) cours.push(k);}   /* sans août */
+  const actes=cours.filter(k=>k%12!==11);                                              /* 9 mois d'actes (sans décembre) */
+  return {onb, mOnb, cours, actes, mJury:mOnb+12, scen:p.statut==="scénario", titres:String(p.titres||"CV,MEM,NTC").split(",").map(s=>s.trim()).filter(Boolean)};
+}
+function typeCV(p,inf,k){
+  if(k%12===11) return "TRE";
+  if(p.plan_cv==="transition-2026"){const key=Math.floor(k/12)+"-"+String(k%12+1).padStart(2,"0"); return PLAN_TRANSITION[key]||"ECF";}
+  const i=inf.actes.indexOf(k); if(i===8) return "Jury blanc"; if([0,2,4,5,6].includes(i)) return "Boss"; return "Mi-parcours";
+}
+function fenetreJury(mJury, occ){              /* semaines 2 et 3, sans jeudi d'onboarding, avant la dernière semaine */
+  const y=Math.floor(mJury/12), m=mJury%12;
+  let d=U(y,m,1); while(wd(d)>4) d=add(d,1);
+  let deb=add(d,1); while(wd(deb)!==0) deb=add(deb,1);
+  const presMois=Object.keys(occ).filter(s=>{const x=P(s);return x.getUTCFullYear()===y&&x.getUTCMonth()===m&&x.getUTCDate()>=15&&occ[s].some(r=>r.k==="pres");}).sort();
+  let fin;
+  if(presMois.length){ let l=P(presMois[0]); l=add(l,-wd(l)); fin=add(l,-3); } else fin=add(deb,11);
+  const onbJeudi=Object.keys(occ).some(s=>{const x=P(s);return x.getUTCFullYear()===y&&x.getUTCMonth()===m&&occ[s].some(r=>r.k==="onb");});
+  const out=[]; for(let x=deb; x<=fin; x=add(x,1)){ if(wd(x)>4||estFerie(x)) continue; if(onbJeudi&&wd(x)===3) continue; out.push(iso(x)); }
+  return out;
+}
+
+/* ---------- Calcul complet ---------- */
+let DATA=null, CALC=null, showScen=true, tpFilter="all";
+function calculer(){
+  const promos=DATA.promos.filter(p=>p.rentree), exc=DATA.exceptions||[];
+  const occ={}, notes={}, fen={}, cvJours={};
+  const push=(s,r)=>{(occ[s]=occ[s]||[]).push(r);};
+  const INF={};
+  promos.forEach(p=>{
+    const inf=INF[p.id]=infosPromo(p);
+    inf.onb.forEach((s,i)=>push(s,{k:"onb",promo:p.id,lib:p.libelle,scen:inf.scen,n:i+1}));
+    inf.cours.forEach(k=>{
+      const y=Math.floor(k/12), m=k%12;
+      inf.titres.forEach(t=>{
+        if(!(t in TITRES)) return;
+        let d=dernierJour(y,m,TITRES[t]); if(!d) return;
+        let note=null;
+        if(estFerie(d)){ note="Report : le "+frc(iso(d))+" est férié (règle du report au vendredi)"; d=add(d,4-TITRES[t]); }
+        const type = t==="CV" ? typeCV(p,inf,k) : (m===11?"TRE":"ECF");
+        push(iso(d),{k:"pres",tp:t,promo:p.id,lib:p.libelle,type,scen:inf.scen,note});
+      });
+    });
+  });
+  /* Exceptions : déplacements, annulations, réservations, jurys */
+  const juryPromo={};
+  exc.forEach(e=>{
+    if(e.type==="deplacement"||e.type==="annulation"){
+      const L=occ[e.date_origine]||[]; const i=L.findIndex(r=>r.k==="pres"&&r.promo===e.promo&&r.tp===e.titre);
+      if(i<0){ (notes[e.date_origine]=notes[e.date_origine]||[]).push("⚠️ Exception sans effet : aucun présentiel "+e.titre+" "+libPromo(e.promo)+" ce jour-là."); return; }
+      const r=L.splice(i,1)[0]; if(!L.length) delete occ[e.date_origine];
+      if(e.type==="deplacement"&&e.date_nouvelle){ r.note="Déplacé du "+fr(e.date_origine)+(e.note?" · "+e.note:""); r.exc=e.id; push(e.date_nouvelle,r); }
+      else (notes[e.date_origine]=notes[e.date_origine]||[]).push("Présentiel "+e.titre+" "+libPromo(e.promo)+" annulé"+(e.note?" · "+e.note:"")+".");
+    } else if(e.type==="reservation"&&e.debut){
+      push(e.debut,{k:"res",n:Number(e.salles||1),lib:e.libelle||"Réservation",note:e.note,exc:e.id});
+    } else if(e.type==="jury"){
+      if(e.promo) juryPromo[e.promo]=e;
+      const lib="Jury "+(e.titres||"")+(e.promo?" · "+libPromo(e.promo):"");
+      if(e.statut==="confirmé") String(e.jours||"").split(",").map(s=>s.trim()).filter(Boolean).forEach(s=>push(s,{k:"jury",lib,note:e.note,exc:e.id}));
+      else if(e.debut&&e.fin){ for(let x=P(e.debut); x<=P(e.fin); x=add(x,1)){ if(wd(x)>4||estFerie(x)) continue; (fen[iso(x)]=fen[iso(x)]||[]).push({lib:lib+" (à définir)",note:e.note,exc:e.id}); } }
+    }
+  });
+  /* Fenêtres de jury par défaut (mois charnière) */
+  promos.forEach(p=>{
+    if(juryPromo[p.id]) return;
+    const inf=INF[p.id]; const lib="Jury "+inf.titres.join(" + ")+" · promo "+p.libelle+" (fenêtre par défaut)";
+    fenetreJury(inf.mJury,occ).forEach(s=>(fen[s]=fen[s]||[]).push({lib,defaut:true,scen:inf.scen}));
+  });
+  /* Mardis à 2 formateurs CV */
+  promos.forEach(p=>{
+    const inf=INF[p.id]; if(!inf.titres.includes("CV")) return;
+    const k0=inf.cours[0], k1=inf.cours[inf.cours.length-1];
+    const deb=U(Math.floor(k0/12),k0%12,1), finMois=U(Math.floor(k1/12),k1%12+1,0);
+    const finCV=dernierJour(finMois.getUTCFullYear(),finMois.getUTCMonth(),1);
+    for(let x=deb; x<=finCV; x=add(x,1)){
+      if(wd(x)!==1||sansCours(x)) continue;
+      if(p.plan_cv==="transition-2026" && x<U(2027,0,1)) continue;
+      const s=estFerie(x)?iso(add(x,3)):iso(x);
+      (cvJours[s]=cvJours[s]||[]).push({promo:p.id,lib:p.libelle,scen:inf.scen});
+    }
+  });
+  CALC={occ,notes,fen,cvJours,INF,promos};
+}
+function libPromo(id){const p=(DATA.promos||[]).find(x=>x.id===id);return p?p.libelle:(id||"");}
+
+/* ---------- Conflits ---------- */
+function analyser(){
+  const {occ,fen}=CALC, conf=[]; let max=0, sat=0;
+  Object.keys(occ).sort().forEach(s=>{
+    const L=occ[s].filter(r=>showScen||!r.scen);
+    let n=0, jury=false, autres=false;
+    L.forEach(r=>{ if(r.k==="jury"){jury=true;} else { autres=true; n+= r.k==="res"? r.n : 1; } });
+    const total = jury ? 2+n : n; max=Math.max(max,total);
+    if(total===2) sat++;
+    if(jury&&autres) conf.push(fr(s)+" : un jury occupe les 2 salles, mais il y a aussi "+L.filter(r=>r.k!=="jury").map(nomCourt).join(", ")+".");
+    else if(total>2) conf.push(fr(s)+" : "+total+" salles demandées ("+L.map(nomCourt).join(", ")+").");
+  });
+  Object.keys(fen).forEach(s=>{ /* présentiel dans une fenêtre de jury confirmée ? non bloquant */ });
+  return {conf,max,sat};
+}
+function nomCourt(r){ if(r.k==="pres") return r.tp+" "+r.lib; if(r.k==="onb") return "onboarding "+r.lib; if(r.k==="res") return r.lib+" ("+r.n+" salle"+(r.n>1?"s":"")+")"; return r.lib; }
+
+/* ---------- Affichage ---------- */
+function plage(){ const t=new Date(); const deb=mk(t.getFullYear(),t.getMonth()); const fin=mk(t.getFullYear()+2,11); return {deb,fin}; }
+function label(r){
+  if(r.k==="onb") return "Onb. "+court(r.lib)+(r.scen?"*":"");
+  if(r.k==="res") return r.lib;
+  if(r.k==="jury") return "Jury";
+  return r.tp+" "+court(r.lib)+(r.scen?"*":"")+(r.type==="Boss"?" ★":r.type==="Jury blanc"?" JB":"");
+}
+function court(lib){ return String(lib).replace("Septembre","sept.").replace("Sept.","sept.").replace("Octobre","oct.").replace("Avril","avr.").replace(/\s+20(\d\d)/," $1").replace(". ",".").replace(" ",""); }
+function full(r){
+  if(r.k==="onb") return "Onboarding commun CV + MEM + NTC · rentrée "+r.lib+" (jour "+r.n+"/5)"+(r.scen?" · scénario":"");
+  if(r.k==="res") return "Salle réservée : "+r.lib+(r.note?" · "+r.note:"");
+  if(r.k==="jury") return r.lib+" : les 2 salles (plateau technique + salle de préparation), aucune formation"+(r.note?" · "+r.note:"");
+  const t = r.type==="Boss"?"ECF (Boss du jeu)":r.type==="Jury blanc"?"jury blanc (Boss 6, formatif ; rattrapage de l'ECF 5 possible)":r.type==="Mi-parcours"?"journée mi-parcours (répétition partielle du Boss, point sur le Book, autonomie encadrée)":r.type==="TRE"?"séance TRE en présentiel (+ goûter de Noël)":"ECF";
+  return r.tp+" · promo "+r.lib+" · "+t+(r.scen?" · scénario, non fixé":"")+(r.note?" · "+r.note:"");
+}
+function render(){
+  const {occ,fen,cvJours,notes}=CALC, {deb,fin}=plage();
+  const box=document.getElementById("months"); box.innerHTML="";
+  let grp=null, yb=null, sat=0, nf=0;
+  for(let k=deb;k<=fin;k++){
+    const y=Math.floor(k/12), m=k%12;
+    const g=(m<6?"Janvier → juin ":"Juillet → décembre ")+y;
+    if(g!==grp){grp=g; const h=document.createElement("h2"); h.className="yh"; h.textContent=g; box.appendChild(h); yb=document.createElement("div"); yb.className="year"; box.appendChild(yb);}
+    let start=U(y,m,1); while(wd(start)!==0) start=add(start,-1);
+    const last=U(y,m+1,0); let cells="", nSat=0, nPres=0;
+    JOURS.forEach(j=>cells+=`<div class="dow">${j}</div>`);
+    for(let w=start; w<=last; w=add(w,7)){
+      for(let i=0;i<5;i++){
+        const dt=add(w,i), s=iso(dt);
+        if(dt.getUTCMonth()!==m){cells+=`<div class="day out"></div>`;continue;}
+        const rs=(occ[s]||[]).filter(r=>showScen||!r.scen), fj=(fen[s]||[]).filter(r=>showScen||!r.scen), off=sansCours(dt);
+        const cvs=(cvJours[s]||[]).filter(r=>showScen||!r.scen);
+        let cls="day", r1="", r2="";
+        const hl=r=> (tpFilter==="all"||r.tp===tpFilter||r.k!=="pres")?"hl":"";
+        const bar=r=>`<div class="room ${r.k==="pres"?r.tp:r.k==="onb"?"ONB":r.k==="res"?"RES":"JURY"} ${r.scen?"scen":""} ${hl(r)}">${label(r)}</div>`;
+        const jury=rs.find(r=>r.k==="jury");
+        if(jury){ cls+=" has"; r1=bar(jury); r2=bar(jury); if(rs.length>1) cls+=" conf"; nPres++; }
+        else if(rs.length){
+          cls+=" has"; nPres++;
+          const flat=[]; rs.forEach(r=>{ if(r.k==="res"&&r.n===2){flat.push(r,r);} else flat.push(r); });
+          if(flat.length>=2){ cls+=" sat"; nSat++; }
+          if(flat.length>2) cls+=" conf";
+          r1=bar(flat[0]);
+          r2= flat[1]? bar(flat[1]) : (flat[0].k==="onb"? `<div class="room ONB ${flat[0].scen?"scen":""} hl">sous-groupes</div>` : `<div class="room">libre</div>`);
+          if(tpFilter!=="all") cls+=" dim";
+        } else if(fj.length){ cls+=" has"; r1=`<div class="room JURYo">Jury ?</div>`; r2=`<div class="room JURYo">Jury ?</div>`; }
+        else if(off){ cls+=" offd"; }
+        if(cvs.length>=2){ cls+=" cv2"; nf++; }
+        const tag=(estFerie(dt)?"<i title='férié'>F</i>":"")+(cvs.length>=2?"<span class='f2'>2 form.</span>":"");
+        const click=rs.length||fj.length||cvs.length>=2||(notes[s]||[]).length;
+        cells+=`<div class="${cls}" data-d="${s}" ${click?'tabindex="0" role="button"':""} aria-label="${JL[i]} ${dt.getUTCDate()} ${MOIS[m]}"><div class="n"><span>${dt.getUTCDate()}</span>${tag}</div>${r1}${r2}</div>`;
+      }
+    }
+    sat+=nSat;
+    const card=document.createElement("section"); card.className="month";
+    card.innerHTML=`<header><h3>${MOIS[m]} ${y}</h3><span class="badge ${nSat?"sat":""}">${nSat?nSat+" jour"+(nSat>1?"s":"")+" complet"+(nSat>1?"s":""):nPres?"des salles libres":"aucun présentiel"}</span></header><div class="grid">${cells}</div>${m===7?'<p class="mnote">Pas de cours en août (épisode d\'été en autonomie).</p>':""}`;
+    yb.appendChild(card);
+  }
+  const a=analyser();
+  document.getElementById("fMax").textContent=a.max+" salle"+(a.max>1?"s":"")+(a.max>2?" ⚠️":"");
+  document.getElementById("fSat").textContent=sat+" jours complets";
+  document.getElementById("fF2").textContent=nf+" mardis à 2 formateurs CV";
+  const cb=document.getElementById("conflits");
+  cb.innerHTML = a.conf.length ? `<div class="banner"><h3>⚠️ ${a.conf.length} conflit${a.conf.length>1?"s":""} à régler</h3><ul>${a.conf.map(c=>"<li>"+c+"</li>").join("")}</ul></div>` : `<div class="banner ok info"><h3>✅ Aucun conflit de salles sur la période affichée</h3></div>`;
+  gantt(); tableF2();
+  const t=new Date(); document.getElementById("printnote").textContent="Version PDF du "+t.toLocaleDateString("fr-FR")+" · * = scénario (non fixé) · bordure rouge = les 2 salles prises · pointillés violets = 2 formateurs CV ce mardi-là.";
+}
+function gantt(){
+  const {deb,fin}=plage(), g=document.getElementById("gantt"), n=fin-deb+1;
+  g.style.setProperty("--n",n);
+  let h="<div></div>"; for(let k=deb;k<=fin;k++){const m=k%12; h+=`<div class="mh ${m===0?"yr":""}">${m===0?Math.floor(k/12):MOIS[m].slice(0,3)}</div>`;}
+  /* jurys sans promo (autres candidats) */
+  const autres=(DATA.exceptions||[]).filter(e=>e.type==="jury"&&!e.promo);
+  if(autres.length){
+    const mois={}; autres.forEach(e=>{ const ds = e.statut==="confirmé" ? String(e.jours||"").split(",").filter(Boolean) : [e.debut]; ds.forEach(s=>{ if(!s) return; const x=P(s); mois[mk(x.getUTCFullYear(),x.getUTCMonth())]= e.statut==="confirmé"?"j":"jo"; }); });
+    h+=`<div class="pl">Autres jurys<small>${autres.map(e=>e.titres).join(" · ")}</small></div>`;
+    for(let k=deb;k<=fin;k++){ const c=mois[k]||"none"; h+=`<div class="c ${c}">${c==="j"?"jury":c==="jo"?"jury ?":""}</div>`; }
+  }
+  CALC.promos.forEach(p=>{
+    const inf=CALC.INF[p.id]; if(inf.scen&&!showScen) return;
+    const jEx=(DATA.exceptions||[]).find(e=>e.type==="jury"&&e.promo===p.id);
+    const fin2=Math.max(inf.mJury, inf.cours[inf.cours.length-1]); if(fin2<deb) return;
+    let row=`<div class="pl" ${inf.scen?'style="color:var(--muted)"':""}>${p.libelle}${inf.scen?"*":""}<small>${inf.titres.join(" · ")}</small></div>`;
+    for(let k=deb;k<=fin;k++){
+      let c="none", t="";
+      if(k===inf.mOnb||(k===inf.mOnb-1&&P(inf.onb[0]).getUTCMonth()===k%12)){c="o";t="onb.";}
+      else if(inf.cours.includes(k)){c="k";} else if(k%12===7&&k>inf.mOnb&&k<inf.mJury){c="a";t="août";}
+      else if(k===inf.mJury){ if(jEx&&jEx.statut==="confirmé"){c="j";t="jury";} else {c="jo";t="jury ?";} }
+      row+=`<div class="c ${c} ${inf.scen?"scenc":""}">${t}</div>`;
+    }
+    h+=row;
+  });
+  g.innerHTML=h;
+}
+function tableF2(){
+  const {cvJours,occ}=CALC; const ds=Object.keys(cvJours).filter(s=>cvJours[s].filter(r=>showScen||!r.scen).length>=2).sort();
+  const per=[]; ds.forEach(s=>{ const key=cvJours[s].map(r=>r.lib).join(" + "); const lastp=per[per.length-1]; if(lastp&&lastp.key===key) lastp.ds.push(s); else per.push({key,ds:[s],scen:cvJours[s].some(r=>r.scen)}); });
+  document.getElementById("tF2").innerHTML = per.length ? per.map(p=>{
+    const pres=p.ds.filter(s=>(occ[s]||[]).filter(r=>r.k==="pres"&&r.tp==="CV").length>=2);
+    return `<tr><td>${fr(p.ds[0])} → ${fr(p.ds[p.ds.length-1])}${p.scen?"*":""}</td><td>${p.key}</td><td class="n">${p.ds.length}</td><td>${pres.map(frc).join(" · ")||"—"}</td></tr>`;
+  }).join("") : `<tr><td colspan="4">Aucun mardi à 2 formateurs sur la période.</td></tr>`;
+}
+function showPanel(s){
+  const p=document.getElementById("panel"), dt=P(s);
+  const rs=(CALC.occ[s]||[]).filter(r=>showScen||!r.scen), fj=CALC.fen[s]||[], cvs=CALC.cvJours[s]||[];
+  let li="";
+  const jury=rs.find(r=>r.k==="jury");
+  if(jury) li+=`<li><b>Salles 1 et 2</b> : ${full(jury)}</li>`;
+  rs.filter(r=>r.k!=="jury").forEach((r,i)=>li+=`<li><b>${jury?"⚠️ En plus":"Salle "+(i+1)}</b> : ${full(r)}</li>`);
+  if(!jury&&rs.length===1) li+=`<li><b>Salle 2</b> : ${rs[0].k==="onb"?"libre → sous-groupes de l'onboarding":rs[0].k==="res"&&rs[0].n===2?"réservée":"libre (bureau ou réunion possible)"}</li>`;
+  fj.forEach(f=>li+=`<li><b>${f.lib}</b>${f.note?" · "+f.note:""} : jour possible, les 2 salles seront prises.</li>`);
+  if(cvs.length>=2) li+=`<li style="color:var(--onb)"><b>2 formateurs CV</b> : promos ${cvs.map(r=>r.lib).join(" et ")}.${rs.length?"":" Journée à distance : aucune salle."}</li>`;
+  (CALC.notes[s]||[]).forEach(n=>li+=`<li>${n}</li>`);
+  p.innerHTML=`<button class="x" aria-label="Fermer le détail">×</button><h4>${JL[wd(dt)]} ${dt.getUTCDate()} ${MOIS[dt.getUTCMonth()]} ${dt.getUTCFullYear()}</h4><ul>${li||"<li>Rien de prévu en salle.</li>"}</ul>`;
+  p.classList.remove("hidden"); p.querySelector(".x").onclick=()=>p.classList.add("hidden");
+}
+
+/* ---------- Échanges avec l'Apps Script ---------- */
+function cle(){ try{return localStorage.getItem(CLE_STOCK)||window._cle||"";}catch(e){return window._cle||"";} }
+function poserCle(v){ window._cle=v; try{ v?localStorage.setItem(CLE_STOCK,v):localStorage.removeItem(CLE_STOCK);}catch(e){} }
+async function api(action,params){
+  if(!API_URL) throw new Error("demo");
+  const q=new URLSearchParams(Object.assign({action, cle:cle()},params||{}));
+  const res=await fetch(API_URL+"?"+q.toString()); const j=await res.json();
+  if(!j.ok){ const e=new Error(j.erreur||"erreur"); e.cle=(j.erreur==="cle"); throw e; }
+  return j;
+}
+function setStatus(t){ document.getElementById("status").textContent=t; }
+async function charger(){
+  setStatus("Chargement…");
+  try{
+    const j=await api("lire");
+    DATA={promos:j.promos||[], exceptions:j.exceptions||[]};
+    setStatus("Données à jour"+(j.maj?" · dernière modification le "+j.maj:""));
+  }catch(e){
+    if(!DATA) DATA=JSON.parse(JSON.stringify(DONNEES_DEFAUT));
+    setStatus(e.message==="demo" ? "Mode démonstration : la Google Sheet n'est pas encore branchée (les modifications ne seront pas enregistrées)." : "⚠️ Impossible de lire la Google Sheet : affichage des dernières données connues.");
+  }
+  calculer(); render(); if(!document.getElementById("admin").classList.contains("hidden")) remplirAdmin();
+}
+async function enregistrer(action,data){
+  if(!API_URL){ /* mode démo : modification locale */
+    const liste = action.includes("promo") ? DATA.promos : DATA.exceptions;
+    if(action.startsWith("supprimer")){ const i=liste.findIndex(x=>x.id===data.id); if(i>=0) liste.splice(i,1); }
+    else { if(!data.id) data.id=(action.includes("promo")?"p":"e")+Date.now(); const i=liste.findIndex(x=>x.id===data.id); if(i>=0) liste[i]=data; else liste.push(data); }
+    calculer(); render(); remplirAdmin(); setStatus("Mode démonstration : modification visible ici seulement, non enregistrée."); return;
+  }
+  try{ setStatus("Enregistrement…"); await api(action,{data:JSON.stringify(data)}); await charger(); setStatus("✅ Enregistré"); }
+  catch(e){ if(e.cle){ poserCle(""); ouvrirAdmin(); alerte("Clé refusée : vérifiez-la."); } else alerte("Échec de l'enregistrement : "+e.message); }
+}
+function alerte(t){ setStatus("⚠️ "+t); }
+
+/* ---------- Écran de modification ---------- */
+function ouvrirAdmin(){
+  const a=document.getElementById("admin"); a.classList.remove("hidden");
+  const ok=!!cle()||!API_URL;
+  document.getElementById("cleZone").classList.toggle("hidden",ok);
+  document.getElementById("adminCorps").classList.toggle("hidden",!ok);
+  if(ok) remplirAdmin();
+  a.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function descExc(e){
+  if(e.type==="jury") return ["Jury", (e.titres||"")+(e.promo?" · promo "+libPromo(e.promo):" · autres candidats"), e.statut==="confirmé"?String(e.jours||"").split(",").filter(Boolean).map(fr).join(", "):(e.debut?fr(e.debut)+" → "+fr(e.fin):"")];
+  if(e.type==="deplacement") return ["Présentiel déplacé", e.titre+" · "+libPromo(e.promo), fr(e.date_origine)+" → "+(e.date_nouvelle?fr(e.date_nouvelle):"?")];
+  if(e.type==="annulation") return ["Présentiel annulé", e.titre+" · "+libPromo(e.promo), fr(e.date_origine)];
+  return ["Salle réservée", (e.libelle||"")+" · "+(e.salles||1)+" salle"+(Number(e.salles)>1?"s":""), e.debut?fr(e.debut):""];
+}
+function remplirAdmin(){
+  const te=document.getElementById("tExc");
+  te.innerHTML=(DATA.exceptions||[]).map(e=>{const d=descExc(e); return `<tr><td>${d[0]}</td><td>${d[1]}</td><td>${d[2]}</td><td>${e.type==="jury"?e.statut:"—"}</td><td>${e.note||""}</td><td style="white-space:nowrap"><button class="act light" data-edit="${e.id}">Modifier</button> <button class="act warn" data-del="${e.id}">Supprimer</button></td></tr>`;}).join("")||`<tr><td colspan="6">Aucune exception.</td></tr>`;
+  const tp=document.getElementById("tPro");
+  tp.innerHTML=(DATA.promos||[]).map(p=>`<tr><td>${p.libelle}</td><td>${p.rentree?fr(p.rentree):""}</td><td>${p.statut}</td><td>${p.titres}</td><td style="white-space:nowrap"><button class="act light" data-pedit="${p.id}">Modifier</button> <button class="act warn" data-pdel="${p.id}">Supprimer</button></td></tr>`).join("");
+  const sel=document.getElementById("ePromo");
+  sel.innerHTML=`<option value="">— Aucune (autres candidats) —</option>`+(DATA.promos||[]).map(p=>`<option value="${p.id}">${p.libelle}</option>`).join("");
+}
+let joursTmp=[];
+function majChamps(){
+  const t=document.getElementById("eType").value, st=document.getElementById("eStatut").value;
+  document.querySelectorAll("#fExc .f-jury,#fExc .f-dep,#fExc .f-ann,#fExc .f-res,#fExc .f-jury-fen,#fExc .f-jury-conf").forEach(x=>x.classList.add("hidden"));
+  const show=c=>document.querySelectorAll("#fExc ."+c).forEach(x=>x.classList.remove("hidden"));
+  if(t==="jury"){ show("f-jury"); show(st==="confirmé"?"f-jury-conf":"f-jury-fen"); }
+  if(t==="deplacement") show("f-dep");
+  if(t==="annulation") show("f-ann");
+  if(t==="reservation") show("f-res");
+  document.getElementById("ePromo").firstElementChild.disabled = (t!=="jury");
+}
+function dessinerJours(){ document.getElementById("eJours").innerHTML=joursTmp.sort().map(s=>`<span class="chip2">${fr(s)}<button type="button" data-rmj="${s}" aria-label="Retirer">×</button></span>`).join(""); }
+function formExc(e){
+  e=e||{type:"jury",statut:"à définir"};
+  const v=(id,x)=>document.getElementById(id).value=x||"";
+  v("eId",e.id); v("eType",e.type); v("ePromo",e.promo); v("eTitres",e.titres); v("eTitre",e.titre||"CV"); v("eStatut",e.statut||"à définir");
+  v("eDebut",e.type==="jury"?e.debut:""); v("eFin",e.fin); v("eOrig",e.date_origine); v("eNouv",e.date_nouvelle);
+  v("eDate",e.type==="reservation"?e.debut:""); v("eSalles",e.salles||"1"); v("eLib",e.libelle); v("eNote",e.note);
+  joursTmp=String(e.jours||"").split(",").map(s=>s.trim()).filter(Boolean); dessinerJours();
+  document.getElementById("fExc").classList.remove("hidden"); majChamps();
+}
+function lireFormExc(){
+  const g=id=>document.getElementById(id).value.trim();
+  const t=g("eType"), e={id:g("eId"), type:t, note:g("eNote")};
+  if(t==="jury"){ Object.assign(e,{promo:g("ePromo"),titres:g("eTitres"),statut:g("eStatut")}); if(e.statut==="confirmé"){ if(!joursTmp.length) return "Ajoutez au moins un jour de jury."; e.jours=joursTmp.join(","); } else { if(!g("eDebut")||!g("eFin")) return "Indiquez le début et la fin de la fenêtre."; e.debut=g("eDebut"); e.fin=g("eFin"); } if(!e.titres) return "Indiquez les titres concernés."; }
+  if(t==="deplacement"||t==="annulation"){ Object.assign(e,{promo:g("ePromo"),titre:g("eTitre"),date_origine:g("eOrig")}); if(!e.promo) return "Choisissez la promo."; if(!e.date_origine) return "Indiquez la date prévue."; if(t==="deplacement"){ e.date_nouvelle=g("eNouv"); if(!e.date_nouvelle) return "Indiquez la nouvelle date."; } }
+  if(t==="reservation"){ Object.assign(e,{debut:g("eDate"),salles:g("eSalles"),libelle:g("eLib")}); if(!e.debut) return "Indiquez la date."; }
+  return e;
+}
+
+/* ---------- Événements ---------- */
+document.addEventListener("click",ev=>{
+  const d=ev.target.closest(".day[tabindex]"); if(d&&!ev.target.closest(".admin")) showPanel(d.dataset.d);
+  const ed=ev.target.closest("[data-edit]"); if(ed) formExc((DATA.exceptions||[]).find(x=>x.id===ed.dataset.edit));
+  const de=ev.target.closest("[data-del]"); if(de){ const e=(DATA.exceptions||[]).find(x=>x.id===de.dataset.del); if(e&&confirmer(de,"Supprimer ?")) enregistrer("supprimer_exception",{id:e.id}); }
+  const pe=ev.target.closest("[data-pedit]"); if(pe){ const p=DATA.promos.find(x=>x.id===pe.dataset.pedit); formPro(p); }
+  const pd=ev.target.closest("[data-pdel]"); if(pd&&confirmer(pd,"Supprimer ?")) enregistrer("supprimer_promo",{id:pd.dataset.pdel});
+  const rj=ev.target.closest("[data-rmj]"); if(rj){ joursTmp=joursTmp.filter(s=>s!==rj.dataset.rmj); dessinerJours(); }
+});
+/* confirmation en deux clics (les boîtes de dialogue du navigateur sont évitées) */
+function confirmer(btn,txt){ if(btn.dataset.armed){ return true; } const old=btn.textContent; btn.dataset.armed="1"; btn.textContent=txt; setTimeout(()=>{delete btn.dataset.armed; btn.textContent=old;},3000); return false; }
+document.addEventListener("keydown",ev=>{ if((ev.key==="Enter"||ev.key===" ")&&ev.target.matches&&ev.target.matches(".day[tabindex]")){ ev.preventDefault(); showPanel(ev.target.dataset.d);} });
+function formPro(p){ p=p||{statut:"scénario",titres:"CV,MEM,NTC"}; const v=(id,x)=>document.getElementById(id).value=x||""; v("pId",p.id); v("pLib",p.libelle); v("pRentree",p.rentree); v("pStatut",p.statut); v("pTitres",p.titres); document.getElementById("fPro").classList.remove("hidden"); }
+document.getElementById("bPrint").onclick=()=>window.print();
+document.getElementById("bReload").onclick=()=>charger();
+document.getElementById("bAdmin").onclick=()=>{ const a=document.getElementById("admin"); if(a.classList.contains("hidden")) ouvrirAdmin(); else a.classList.add("hidden"); };
+document.getElementById("bCle").onclick=async()=>{ poserCle(document.getElementById("cle").value.trim()); try{ await api("verifier"); ouvrirAdmin(); setStatus("Clé acceptée"); }catch(e){ poserCle(""); alerte(e.cle?"Clé refusée.":"Vérification impossible : "+e.message); } };
+document.getElementById("bOublier").onclick=()=>{ poserCle(""); ouvrirAdmin(); };
+document.getElementById("bNewExc").onclick=()=>formExc();
+document.getElementById("bCancelExc").onclick=()=>document.getElementById("fExc").classList.add("hidden");
+document.getElementById("eType").onchange=majChamps; document.getElementById("eStatut").onchange=majChamps;
+document.getElementById("bAddJour").onclick=()=>{ const s=document.getElementById("eJour").value; if(s&&!joursTmp.includes(s)){ joursTmp.push(s); dessinerJours(); } };
+document.getElementById("bSaveExc").onclick=()=>{ const e=lireFormExc(); if(typeof e==="string") return alerte(e); document.getElementById("fExc").classList.add("hidden"); enregistrer("enregistrer_exception",e); };
+document.getElementById("bNewPro").onclick=()=>formPro();
+document.getElementById("bCancelPro").onclick=()=>document.getElementById("fPro").classList.add("hidden");
+document.getElementById("bSavePro").onclick=()=>{ const g=id=>document.getElementById(id).value.trim(); const p={id:g("pId"),libelle:g("pLib"),rentree:g("pRentree"),statut:g("pStatut"),titres:g("pTitres")||"CV,MEM,NTC"}; if(!p.libelle||!p.rentree) return alerte("Indiquez le nom et la date de rentrée."); const old=DATA.promos.find(x=>x.id===p.id); p.plan_cv=old&&old.plan_cv?old.plan_cv:"standard"; document.getElementById("fPro").classList.add("hidden"); enregistrer("enregistrer_promo",p); };
+document.getElementById("bScen").onclick=e=>{showScen=!showScen;e.target.setAttribute("aria-pressed",showScen);e.target.textContent=showScen?"Scénarios affichés":"Scénarios masqués";render();};
+document.querySelectorAll(".chip.tp").forEach(b=>b.onclick=()=>{tpFilter=b.dataset.tp;document.querySelectorAll(".chip.tp").forEach(x=>x.setAttribute("aria-pressed",x===b));render();});
+charger();
+</script>
+</body>
+</html>
