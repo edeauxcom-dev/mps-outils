@@ -154,6 +154,9 @@ button.chip:focus-visible,.day:focus-visible{outline:3px solid var(--onb);outlin
 .room.RES{background:var(--res);color:#fff}
 .sw.res{background:var(--res)}
 .day.conf{outline:3px dashed var(--sat);outline-offset:1px}
+.room.JURY{background:var(--jury);color:var(--card)}
+.panel ul ul{padding-left:16px;margin-top:4px}
+.panel li{margin:3px 0}
 
 /* ---- Outil éditable ---- */
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 16px}
@@ -224,10 +227,11 @@ button.act:focus-visible{outline:3px solid var(--onb);outline-offset:2px}
             <option value="deplacement">Présentiel déplacé</option>
             <option value="annulation">Présentiel annulé</option>
             <option value="reservation">Salle réservée (réunion, autre)</option>
+            <option value="masquer">Fenêtre de jury calculée : la supprimer</option>
           </select></div>
-          <div class="f-jury f-dep f-ann"><label for="ePromo">Promo</label><select id="ePromo"></select></div>
+          <div class="f-jury f-dep f-ann f-mas"><label for="ePromo">Promo</label><select id="ePromo"></select></div>
           <div class="f-jury"><label for="eTitres">Titres concernés</label><input id="eTitres" placeholder="ex. CC + NTC"></div>
-          <div class="f-dep f-ann"><label for="eTitre">Titre</label><select id="eTitre"><option>CV</option><option>MEM</option><option>NTC</option></select></div>
+          <div class="f-dep f-ann"><label for="eTitre">Titre</label><select id="eTitre"><option>CV</option><option>MEM</option><option>NTC</option><option value="ONB">Onboarding</option></select></div>
           <div class="f-jury"><label for="eStatut">Statut</label><select id="eStatut"><option value="à définir">À définir (fenêtre)</option><option value="confirmé">Confirmé (jours précis)</option></select></div>
         </div>
         <div class="row f-jury-fen">
@@ -419,28 +423,30 @@ function calculer(){
     });
   });
   /* Exceptions : déplacements, annulations, réservations, jurys */
-  const juryPromo={};
+  const juryPromo={}, masques={};
   exc.forEach(e=>{
+    const pid=idPromo(e.promo), nomT=e.titre==="ONB"?"onboarding":e.titre;
+    if(e.type==="masquer"){ masques[pid]=true; return; }
     if(e.type==="deplacement"||e.type==="annulation"){
-      const L=occ[e.date_origine]||[]; const i=L.findIndex(r=>r.k==="pres"&&r.promo===e.promo&&r.tp===e.titre);
-      if(i<0){ (notes[e.date_origine]=notes[e.date_origine]||[]).push("⚠️ Exception sans effet : aucun présentiel "+e.titre+" "+libPromo(e.promo)+" ce jour-là."); return; }
+      const L=occ[e.date_origine]||[]; const i=L.findIndex(r=> e.titre==="ONB" ? (r.k==="onb"&&r.promo===pid) : (r.k==="pres"&&r.promo===pid&&r.tp===e.titre));
+      if(i<0){ (notes[e.date_origine]=notes[e.date_origine]||[]).push("⚠️ Exception sans effet : aucun présentiel "+nomT+" "+libPromo(e.promo)+" ce jour-là."); return; }
       const r=L.splice(i,1)[0]; if(!L.length) delete occ[e.date_origine];
       if(e.type==="deplacement"&&e.date_nouvelle){ r.note="Déplacé du "+fr(e.date_origine)+(e.note?" · "+e.note:""); r.exc=e.id; push(e.date_nouvelle,r); }
-      else (notes[e.date_origine]=notes[e.date_origine]||[]).push("Présentiel "+e.titre+" "+libPromo(e.promo)+" annulé"+(e.note?" · "+e.note:"")+".");
+      else (notes[e.date_origine]=notes[e.date_origine]||[]).push("Présentiel "+nomT+" "+libPromo(e.promo)+" annulé"+(e.note?" · "+e.note:"")+".");
     } else if(e.type==="reservation"&&e.debut){
       push(e.debut,{k:"res",n:Number(e.salles||1),lib:e.libelle||"Réservation",note:e.note,exc:e.id});
     } else if(e.type==="jury"){
-      if(e.promo) juryPromo[e.promo]=e;
+      if(pid) juryPromo[pid]=e;
       const lib="Jury "+(e.titres||"")+(e.promo?" · "+libPromo(e.promo):"");
-      if(e.statut==="confirmé") String(e.jours||"").split(",").map(s=>s.trim()).filter(Boolean).forEach(s=>push(s,{k:"jury",lib,note:e.note,exc:e.id}));
+      if(e.statut==="confirmé") String(e.jours||"").split(",").map(s=>s.trim()).filter(Boolean).forEach(s=>push(s,{k:"jury",lib,titres:e.titres,note:e.note,exc:e.id}));
       else if(e.debut&&e.fin){ for(let x=P(e.debut); x<=P(e.fin); x=add(x,1)){ if(wd(x)>4||estFerie(x)) continue; (fen[iso(x)]=fen[iso(x)]||[]).push({lib:lib+" (à définir)",note:e.note,exc:e.id}); } }
     }
   });
   /* Fenêtres de jury par défaut (mois charnière) */
   promos.forEach(p=>{
-    if(juryPromo[p.id]) return;
+    if(juryPromo[p.id]||masques[p.id]) return;
     const inf=INF[p.id]; const lib="Jury "+inf.titres.join(" + ")+" · promo "+p.libelle+" (fenêtre par défaut)";
-    fenetreJury(inf.mJury,occ).forEach(s=>(fen[s]=fen[s]||[]).push({lib,defaut:true,scen:inf.scen}));
+    fenetreJury(inf.mJury,occ).forEach(s=>(fen[s]=fen[s]||[]).push({lib,defaut:true,scen:inf.scen,promo:p.id,titres:inf.titres.join(" + ")}));
   });
   /* Mardis à 2 formateurs CV */
   promos.forEach(p=>{
@@ -455,9 +461,11 @@ function calculer(){
       (cvJours[s]=cvJours[s]||[]).push({promo:p.id,lib:p.libelle,scen:inf.scen});
     }
   });
-  CALC={occ,notes,fen,cvJours,INF,promos};
+  CALC={occ,notes,fen,cvJours,INF,promos,masques,juryPromo};
 }
-function libPromo(id){const p=(DATA.promos||[]).find(x=>x.id===id);return p?p.libelle:(id||"");}
+const norm=x=>String(x||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"").replace(/20(\d\d)$/,"$1");
+function idPromo(x){ if(!x) return ""; const n=norm(x); const p=(DATA.promos||[]).find(q=>norm(q.id)===n||norm(q.libelle)===n); return p?p.id:x; }
+function libPromo(id){const p=(DATA.promos||[]).find(x=>x.id===idPromo(id));return p?p.libelle:(id||"");}
 
 /* ---------- Conflits ---------- */
 function analyser(){
@@ -481,7 +489,7 @@ function plage(){ const t=new Date(); const deb=mk(t.getFullYear(),t.getMonth())
 function label(r){
   if(r.k==="onb") return "Onb. "+court(r.lib)+(r.scen?"*":"");
   if(r.k==="res") return r.lib;
-  if(r.k==="jury") return "Jury";
+  if(r.k==="jury") return "Jury "+(r.titres||"");
   return r.tp+" "+court(r.lib)+(r.scen?"*":"")+(r.type==="Boss"?" ★":r.type==="Jury blanc"?" JB":"");
 }
 function court(lib){ return String(lib).replace("Septembre","sept.").replace("Sept.","sept.").replace("Octobre","oct.").replace("Avril","avr.").replace(/\s+20(\d\d)/," $1").replace(". ",".").replace(" ",""); }
@@ -557,14 +565,14 @@ function gantt(){
   }
   CALC.promos.forEach(p=>{
     const inf=CALC.INF[p.id]; if(inf.scen&&!showScen) return;
-    const jEx=(DATA.exceptions||[]).find(e=>e.type==="jury"&&e.promo===p.id);
+    const jEx=CALC.juryPromo[p.id];
     const fin2=Math.max(inf.mJury, inf.cours[inf.cours.length-1]); if(fin2<deb) return;
     let row=`<div class="pl" ${inf.scen?'style="color:var(--muted)"':""}>${p.libelle}${inf.scen?"*":""}<small>${inf.titres.join(" · ")}</small></div>`;
     for(let k=deb;k<=fin;k++){
       let c="none", t="";
       if(k===inf.mOnb||(k===inf.mOnb-1&&P(inf.onb[0]).getUTCMonth()===k%12)){c="o";t="onb.";}
       else if(inf.cours.includes(k)){c="k";} else if(k%12===7&&k>inf.mOnb&&k<inf.mJury){c="a";t="août";}
-      else if(k===inf.mJury){ if(jEx&&jEx.statut==="confirmé"){c="j";t="jury";} else {c="jo";t="jury ?";} }
+      else if(k===inf.mJury){ if(jEx&&jEx.statut==="confirmé"){c="j";t="jury";} else if(!CALC.masques[p.id]||jEx){c="jo";t="jury ?";} }
       row+=`<div class="c ${c} ${inf.scen?"scenc":""}">${t}</div>`;
     }
     h+=row;
@@ -590,9 +598,40 @@ function showPanel(s){
   fj.forEach(f=>li+=`<li><b>${f.lib}</b>${f.note?" · "+f.note:""} : jour possible, les 2 salles seront prises.</li>`);
   if(cvs.length>=2) li+=`<li style="color:var(--onb)"><b>2 formateurs CV</b> : promos ${cvs.map(r=>r.lib).join(" et ")}.${rs.length?"":" Journée à distance : aucune salle."}</li>`;
   (CALC.notes[s]||[]).forEach(n=>li+=`<li>${n}</li>`);
+  li+=actionsJour(s,rs,fj);
   p.innerHTML=`<button class="x" aria-label="Fermer le détail">×</button><h4>${JL[wd(dt)]} ${dt.getUTCDate()} ${MOIS[dt.getUTCMonth()]} ${dt.getUTCFullYear()}</h4><ul>${li||"<li>Rien de prévu en salle.</li>"}</ul>`;
   p.classList.remove("hidden"); p.querySelector(".x").onclick=()=>p.classList.add("hidden");
 }
+
+/* ---------- Modifier depuis le calendrier ---------- */
+function adminOuvert(){ return !document.getElementById("admin").classList.contains("hidden") && !document.getElementById("adminCorps").classList.contains("hidden"); }
+function actionsJour(s,rs,fj){
+  if(!adminOuvert()) return (rs.length||fj.length) ? `<li class="noprint" style="color:var(--muted)">Pour modifier ce jour, cliquez d'abord sur « ✏️ Modifier les dates ».</li>` : "";
+  const b=(txt,attrs,cls)=>`<button type="button" class="act ${cls||"light"}" ${attrs}>${txt}</button>`;
+  let h="";
+  rs.forEach(r=>{
+    const nom=r.k==="pres"?r.tp+" "+r.lib:r.k==="onb"?"Onboarding "+r.lib:r.lib;
+    let bt="";
+    if(r.exc) bt=b("Modifier",`data-act="edit" data-id="${r.exc}"`);
+    else if(r.k==="pres"||r.k==="onb"){ const t=r.k==="onb"?"ONB":r.tp; bt=b("Déplacer",`data-act="dep" data-promo="${r.promo}" data-titre="${t}" data-date="${s}"`)+" "+b("Annuler ce présentiel",`data-act="ann" data-promo="${r.promo}" data-titre="${t}" data-date="${s}"`,"warn"); }
+    if(bt) h+=`<li><b>${nom}</b> : ${bt}</li>`;
+  });
+  fj.forEach(f=>{
+    if(f.exc) h+=`<li><b>${f.lib}</b> : ${b("Modifier",`data-act="edit" data-id="${f.exc}"`)}</li>`;
+    else if(f.defaut) h+=`<li><b>Fenêtre de jury calculée (promo ${libPromo(f.promo)})</b> : ${b("Remplacer par des dates confirmées",`data-act="jury" data-promo="${f.promo}" data-titres="${f.titres}"`)} ${b("Supprimer cette fenêtre",`data-act="masq" data-promo="${f.promo}"`,"warn")}</li>`;
+  });
+  return h ? `<li class="noprint" style="list-style:none;margin-top:8px"><b>✏️ Modifier</b><ul>${h}</ul></li>` : "";
+}
+function versFormulaire(e){ formExc(e); document.getElementById("panel").classList.add("hidden"); document.getElementById("fExc").scrollIntoView({behavior:"smooth",block:"center"}); }
+document.addEventListener("click",ev=>{
+  const a=ev.target.closest("[data-act]"); if(!a) return;
+  const d=a.dataset;
+  if(d.act==="edit") versFormulaire((DATA.exceptions||[]).find(x=>x.id===d.id));
+  if(d.act==="dep") versFormulaire({type:"deplacement",promo:d.promo,titre:d.titre,date_origine:d.date});
+  if(d.act==="ann") versFormulaire({type:"annulation",promo:d.promo,titre:d.titre,date_origine:d.date});
+  if(d.act==="jury") versFormulaire({type:"jury",promo:d.promo,titres:d.titres,statut:"confirmé"});
+  if(d.act==="masq" && confirmer(a,"Confirmer la suppression ?")){ document.getElementById("panel").classList.add("hidden"); enregistrer("enregistrer_exception",{type:"masquer",promo:d.promo,note:"Fenêtre calculée supprimée"}); }
+});
 
 /* ---------- Échanges avec l'Apps Script ---------- */
 function cle(){ try{return localStorage.getItem(CLE_STOCK)||window._cle||"";}catch(e){return window._cle||"";} }
@@ -640,8 +679,9 @@ function ouvrirAdmin(){
 }
 function descExc(e){
   if(e.type==="jury") return ["Jury", (e.titres||"")+(e.promo?" · promo "+libPromo(e.promo):" · autres candidats"), e.statut==="confirmé"?String(e.jours||"").split(",").filter(Boolean).map(fr).join(", "):(e.debut?fr(e.debut)+" → "+fr(e.fin):"")];
-  if(e.type==="deplacement") return ["Présentiel déplacé", e.titre+" · "+libPromo(e.promo), fr(e.date_origine)+" → "+(e.date_nouvelle?fr(e.date_nouvelle):"?")];
-  if(e.type==="annulation") return ["Présentiel annulé", e.titre+" · "+libPromo(e.promo), fr(e.date_origine)];
+  if(e.type==="deplacement") return ["Présentiel déplacé", (e.titre==="ONB"?"Onboarding":e.titre)+" · "+libPromo(e.promo), fr(e.date_origine)+" → "+(e.date_nouvelle?fr(e.date_nouvelle):"?")];
+  if(e.type==="annulation") return ["Présentiel annulé", (e.titre==="ONB"?"Onboarding":e.titre)+" · "+libPromo(e.promo), fr(e.date_origine)];
+  if(e.type==="masquer") return ["Fenêtre de jury supprimée", "promo "+libPromo(e.promo), "—"];
   return ["Salle réservée", (e.libelle||"")+" · "+(e.salles||1)+" salle"+(Number(e.salles)>1?"s":""), e.debut?fr(e.debut):""];
 }
 function remplirAdmin(){
@@ -655,19 +695,20 @@ function remplirAdmin(){
 let joursTmp=[];
 function majChamps(){
   const t=document.getElementById("eType").value, st=document.getElementById("eStatut").value;
-  document.querySelectorAll("#fExc .f-jury,#fExc .f-dep,#fExc .f-ann,#fExc .f-res,#fExc .f-jury-fen,#fExc .f-jury-conf").forEach(x=>x.classList.add("hidden"));
+  document.querySelectorAll("#fExc .f-jury,#fExc .f-dep,#fExc .f-ann,#fExc .f-res,#fExc .f-mas,#fExc .f-jury-fen,#fExc .f-jury-conf").forEach(x=>x.classList.add("hidden"));
   const show=c=>document.querySelectorAll("#fExc ."+c).forEach(x=>x.classList.remove("hidden"));
   if(t==="jury"){ show("f-jury"); show(st==="confirmé"?"f-jury-conf":"f-jury-fen"); }
   if(t==="deplacement") show("f-dep");
   if(t==="annulation") show("f-ann");
   if(t==="reservation") show("f-res");
+  if(t==="masquer") show("f-mas");
   document.getElementById("ePromo").firstElementChild.disabled = (t!=="jury");
 }
 function dessinerJours(){ document.getElementById("eJours").innerHTML=joursTmp.sort().map(s=>`<span class="chip2">${fr(s)}<button type="button" data-rmj="${s}" aria-label="Retirer">×</button></span>`).join(""); }
 function formExc(e){
   e=e||{type:"jury",statut:"à définir"};
   const v=(id,x)=>document.getElementById(id).value=x||"";
-  v("eId",e.id); v("eType",e.type); v("ePromo",e.promo); v("eTitres",e.titres); v("eTitre",e.titre||"CV"); v("eStatut",e.statut||"à définir");
+  v("eId",e.id); v("eType",e.type); v("ePromo",idPromo(e.promo)); v("eTitres",e.titres); v("eTitre",e.titre||"CV"); v("eStatut",e.statut||"à définir");
   v("eDebut",e.type==="jury"?e.debut:""); v("eFin",e.fin); v("eOrig",e.date_origine); v("eNouv",e.date_nouvelle);
   v("eDate",e.type==="reservation"?e.debut:""); v("eSalles",e.salles||"1"); v("eLib",e.libelle); v("eNote",e.note);
   joursTmp=String(e.jours||"").split(",").map(s=>s.trim()).filter(Boolean); dessinerJours();
@@ -679,12 +720,13 @@ function lireFormExc(){
   if(t==="jury"){ Object.assign(e,{promo:g("ePromo"),titres:g("eTitres"),statut:g("eStatut")}); if(e.statut==="confirmé"){ if(!joursTmp.length) return "Ajoutez au moins un jour de jury."; e.jours=joursTmp.join(","); } else { if(!g("eDebut")||!g("eFin")) return "Indiquez le début et la fin de la fenêtre."; e.debut=g("eDebut"); e.fin=g("eFin"); } if(!e.titres) return "Indiquez les titres concernés."; }
   if(t==="deplacement"||t==="annulation"){ Object.assign(e,{promo:g("ePromo"),titre:g("eTitre"),date_origine:g("eOrig")}); if(!e.promo) return "Choisissez la promo."; if(!e.date_origine) return "Indiquez la date prévue."; if(t==="deplacement"){ e.date_nouvelle=g("eNouv"); if(!e.date_nouvelle) return "Indiquez la nouvelle date."; } }
   if(t==="reservation"){ Object.assign(e,{debut:g("eDate"),salles:g("eSalles"),libelle:g("eLib")}); if(!e.debut) return "Indiquez la date."; }
+  if(t==="masquer"){ e.promo=g("ePromo"); if(!e.promo) return "Choisissez la promo."; }
   return e;
 }
 
 /* ---------- Événements ---------- */
 document.addEventListener("click",ev=>{
-  const d=ev.target.closest(".day[tabindex]"); if(d&&!ev.target.closest(".admin")) showPanel(d.dataset.d);
+  const d=ev.target.closest(".day[tabindex]"); if(d&&!ev.target.closest(".admin")&&!ev.target.closest("[data-act]")) showPanel(d.dataset.d);
   const ed=ev.target.closest("[data-edit]"); if(ed) formExc((DATA.exceptions||[]).find(x=>x.id===ed.dataset.edit));
   const de=ev.target.closest("[data-del]"); if(de){ const e=(DATA.exceptions||[]).find(x=>x.id===de.dataset.del); if(e&&confirmer(de,"Supprimer ?")) enregistrer("supprimer_exception",{id:e.id}); }
   const pe=ev.target.closest("[data-pedit]"); if(pe){ const p=DATA.promos.find(x=>x.id===pe.dataset.pedit); formPro(p); }
